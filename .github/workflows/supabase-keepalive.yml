@@ -1,0 +1,36 @@
+name: Supabase Keep-Alive
+
+# Runs on a schedule so the free-tier Supabase project never sits idle
+# long enough (7 days) to get auto-paused. Also runnable manually.
+on:
+  schedule:
+    # Every 3 days at 04:00 UTC — comfortably inside the 7-day window
+    - cron: '0 4 */3 * *'
+  workflow_dispatch: {}   # lets you trigger it manually from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST endpoint
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "Pinging Supabase to keep project awake..."
+          # Hits PostgREST root — a lightweight authenticated request that
+          # counts as real database/API activity and resets the inactivity timer.
+          http_status=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+
+          echo "HTTP status: $http_status"
+          cat /tmp/response.txt
+
+          if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 500 ]; then
+            echo "✅ Supabase responded — project is active."
+          else
+            echo "⚠️ Unexpected response — check that SUPABASE_URL / SUPABASE_ANON_KEY secrets are correct, or that the project isn't already paused (in which case restore it manually from the dashboard)."
+            exit 1
+          fi

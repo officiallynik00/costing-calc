@@ -12,25 +12,33 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase REST endpoint
+      - name: Ping Supabase (real table query)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           echo "Pinging Supabase to keep project awake..."
-          # Hits PostgREST root — a lightweight authenticated request that
-          # counts as real database/API activity and resets the inactivity timer.
+          # Selects a single column, 1 row, from the 'ppds' table.
+          # This is a genuine database read via the anon key — the kind of
+          # activity that resets Supabase's 7-day inactivity timer.
           http_status=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
-            "${SUPABASE_URL}/rest/v1/" \
+            "${SUPABASE_URL}/rest/v1/ppds?select=id&limit=1" \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
 
           echo "HTTP status: $http_status"
           cat /tmp/response.txt
+          echo ""
 
-          if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 500 ]; then
-            echo "✅ Supabase responded — project is active."
+          if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ]; then
+            echo "✅ Query succeeded — project is active."
+          elif [ "$http_status" -eq 401 ] || [ "$http_status" -eq 403 ]; then
+            echo "❌ Auth error — check SUPABASE_ANON_KEY secret is correct and that Row Level Security on 'ppds' allows SELECT for the anon role."
+            exit 1
+          elif [ "$http_status" -eq 404 ]; then
+            echo "❌ Table not found — check SUPABASE_URL secret, or that 'ppds' is the correct table name."
+            exit 1
           else
-            echo "⚠️ Unexpected response — check that SUPABASE_URL / SUPABASE_ANON_KEY secrets are correct, or that the project isn't already paused (in which case restore it manually from the dashboard)."
+            echo "⚠️ Unexpected response — project may currently be paused (restore it manually from the dashboard), or another issue occurred."
             exit 1
           fi

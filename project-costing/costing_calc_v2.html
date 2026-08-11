@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Landing cost worksheet</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#F5F2EA; --surface:#FFFFFF; --ink:#1B2A32; --ink-soft:#5B6B72;
+    --line:#DAD4C4; --accent:#A03B25; --green:#1F6F5C; --shade:#F0ECE0;
+    --amber:#93650F; --amber-bg:#FBEFDC;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; font-size:12px; line-height:1.4;
+       min-height:100vh; min-height:100dvh; width:100%; display:flex; flex-direction:column;}
+  .wrap{width:100%; max-width:none; margin:0; padding:0; flex:1; display:flex; flex-direction:column; min-height:0;}
+  header{background:var(--ink); color:#F5F2EA; padding:1.25rem clamp(1rem,3vw,2rem); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.75rem; flex-shrink:0;}
+  header h1{font-family:'Fraunces',serif; font-weight:600; font-size:21px; margin:0;}
+  header p{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:#B9C2C4; margin:2px 0 0;}
+  main{padding:1.25rem clamp(1rem,3vw,2rem) 1.5rem; flex:1; display:flex; flex-direction:column; min-height:0; width:100%;}
+  .toolbar{display:flex; gap:.5rem; margin-bottom:1rem; flex-wrap:wrap;}
+  button{font-family:'Inter',sans-serif; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--ink); background:var(--surface); color:var(--ink); padding:.4rem .75rem; border-radius:5px;}
+  button:hover{background:var(--shade);}
+  button.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+  button.primary:hover{background:#8a3120;}
+  button.ghost{border-color:var(--line); color:var(--ink-soft); font-size:11px; padding:.3rem .6rem;}
+  button.tiny{padding:.15rem .4rem; font-size:11px; border-radius:4px;}
+
+  .ppd{background:var(--surface); border:1px solid var(--line); border-radius:9px; margin-bottom:1rem; overflow:hidden;}
+  .ppd-head{background:var(--shade); padding:.6rem .9rem; display:flex; align-items:center; gap:.9rem; flex-wrap:wrap; border-bottom:1px solid var(--line);}
+  .ppd-head .grp{display:flex; flex-direction:column; gap:2px;}
+  .ppd-head label{font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
+  .ppd-head input{font-family:'IBM Plex Mono',monospace; font-size:12px; padding:.3rem .45rem; border:1px solid var(--line); border-radius:4px; background:#fff;}
+  .ppd-head input.wide{width:150px;}
+  .ppd-head input.narrow{width:88px;}
+  .ppd-head .readout{margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft); text-align:right;}
+  .ppd-head .del{color:var(--accent); border-color:var(--accent);}
+  .ppd-head .divider{width:1px; align-self:stretch; background:var(--line); margin:0 .1rem;}
+  .ppd-head input.extra-wide{width:190px;}
+  .grp.branch input{background:#EDEFC2; border-color:#C9CC7A;}
+  .grp.transport input{background:#FFF9B0; border-color:#E0D64E;}
+  .grp.insurance input{background:#FBE0BE; border-color:#E0AE6E;}
+  .ppd-sec-label{font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); font-weight:600; padding:.5rem .9rem 0;}
+  .legend{display:flex; align-items:center; gap:.5rem; font-size:11px; color:var(--ink-soft); align-self:center;}
+  .legend .swatch{display:inline-block; width:11px; height:11px; border-radius:2px; background:var(--amber-bg); border:1px solid var(--amber);}
+  .toolbar .sep, .rec-toolbar .sep{width:1px; background:var(--line); align-self:stretch; margin:0 .25rem;}
+
+  table{border-collapse:collapse; width:100%;}
+  table.calc-table{table-layout:fixed;}
+  .h-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  thead th{background:#28353c; color:#EDE9DD; font-weight:500; font-size:10px; text-transform:uppercase; letter-spacing:.02em; padding:.4rem .35rem; text-align:right; border-right:1px solid #3c4a51; white-space:nowrap;}
+  thead th.left{text-align:left;}
+  tbody td{padding:.3rem .35rem; border-bottom:1px solid var(--line); text-align:right;}
+  table.calc-table tbody td{overflow:hidden;}
+  tbody td.left{text-align:left;}
+  tbody tr:nth-child(even){background:#FBFAF6;}
+  tbody tr.exempt-row{background:var(--amber-bg) !important;}
+  tbody input{width:100%; border:none; background:transparent; font-family:'IBM Plex Mono',monospace; font-size:12px; text-align:right; padding:.1rem;}
+  tbody input.text{text-align:left; font-family:'Inter',sans-serif;}
+  tbody input:focus{outline:1px solid var(--accent); background:#fff; border-radius:3px;}
+  tbody td.rate{color:var(--green); font-weight:500; font-family:'IBM Plex Mono',monospace;}
+  tbody td.exempted-val{color:var(--amber); font-family:'IBM Plex Mono',monospace;}
+  tbody td.taxable-val{font-family:'IBM Plex Mono',monospace;}
+  tbody td.batch-code{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.02em; color:var(--ink-soft);}
+  .exempt-toggle{cursor:pointer; width:16px; height:16px;}
+  .row-actions{display:flex; gap:4px; justify-content:flex-end;}
+
+  .detail{background:#F7F4EC; border-bottom:1px solid var(--line);}
+  .detail-inner{display:grid; grid-template-columns:repeat(auto-fit,minmax(105px,1fr)); gap:.5rem; padding:.6rem .9rem;}
+  .detail-field label{display:block; font-size:9.5px; text-transform:uppercase; color:var(--ink-soft); margin-bottom:2px;}
+  .detail-field input{width:100%; font-family:'IBM Plex Mono',monospace; font-size:11.5px; padding:.3rem .4rem; border:1px solid var(--line); border-radius:4px;}
+  .detail-field .ro{font-family:'IBM Plex Mono',monospace; font-size:11.5px; padding:.3rem 0; color:var(--ink-soft);}
+
+  .empty{padding:1.5rem; text-align:center; color:var(--ink-soft); border:1px dashed var(--line); border-radius:9px; background:var(--surface);}
+  .summary{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:.6rem; margin:1.5rem 0;}
+  .metric{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:.75rem 1rem;}
+  .metric .label{font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
+  .metric .val{font-family:'IBM Plex Mono',monospace; font-size:18px; margin-top:.2rem;}
+  .metric.accent .val{color:var(--accent);}
+  .metric.green .val{color:var(--green);}
+  .metric.amber .val{color:var(--amber);}
+
+  .stage2-header{margin:2rem 0 .75rem; padding-top:1.25rem; border-top:2px solid var(--ink);}
+  .stage2-header h2{font-family:'Fraunces',serif; font-weight:600; font-size:18px; margin:0 0 .2rem;}
+  .stage2-header p{font-size:11.5px; color:var(--ink-soft); margin:0; max-width:760px;}
+  .grp.s2 input{background:#E4EEEC; border-color:#9CC3BB;}
+  td.s2-val{color:var(--green); font-weight:500; font-family:'IBM Plex Mono',monospace;}
+  td.s2-rate{color:var(--accent); font-weight:600; font-family:'IBM Plex Mono',monospace;}
+
+  /* ---------- Tabs ---------- */
+  .tabnav{background:#0F1B21; padding:0 clamp(1rem,3vw,2rem); display:flex; gap:.25rem; flex-wrap:wrap; flex-shrink:0;}
+  .tabnav button{background:transparent; border:none; border-radius:0; color:#9AA9AE; padding:.7rem 1rem; font-size:12.5px; font-weight:500; border-bottom:2px solid transparent;}
+  .tabnav button:hover{background:rgba(255,255,255,.05); color:#EDE9DD;}
+  .tabnav button.active{color:#EDE9DD; border-bottom:2px solid var(--accent);}
+  .panel{display:none;}
+  .panel.active{display:flex; flex-direction:column; flex:1; min-height:0;}
+  .panel.active > main{flex:1; display:flex; flex-direction:column; min-height:0;}
+
+  /* ---------- Records log ---------- */
+  .rec-toolbar{display:flex; gap:.6rem; align-items:center; margin-bottom:.9rem; flex-wrap:wrap;}
+  .rec-toolbar input[type=text]{font-family:'IBM Plex Mono',monospace; font-size:12px; padding:.4rem .6rem; border:1px solid var(--line); border-radius:5px; width:240px; background:#fff;}
+  .rec-count{font-size:11px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace;}
+  .rec-table-wrap{background:var(--surface); border:1px solid var(--line); border-radius:9px; overflow-x:auto;}
+  table.rec-table{width:max-content; min-width:100%;}
+  table.rec-table thead th{cursor:pointer; user-select:none; white-space:nowrap;}
+  table.rec-table thead th .arrow{opacity:.6; font-size:9px; margin-left:3px;}
+  table.rec-table tbody td{white-space:nowrap; font-family:'IBM Plex Mono',monospace; font-size:11.5px;}
+  table.rec-table tbody td.left{font-family:'Inter',sans-serif; white-space:normal;}
+  .rec-actions{display:flex; gap:5px; justify-content:flex-end;}
+  .rec-actions button.view{color:var(--green); border-color:var(--green);}
+  .rec-actions button.edit{color:var(--amber); border-color:var(--amber);}
+  .rec-actions button.del{color:var(--accent); border-color:var(--accent);}
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{position:fixed; inset:0; background:rgba(27,42,50,.55); display:flex; align-items:flex-start; justify-content:center; padding:3rem 1rem; z-index:50; overflow-y:auto;}
+  .modal{background:var(--surface); border-radius:10px; max-width:920px; width:100%; padding:1.25rem 1.5rem 1.5rem; box-shadow:0 20px 50px rgba(0,0,0,.25);}
+  .modal h3{font-family:'Fraunces',serif; font-size:17px; margin:0 0 .9rem;}
+  .modal-close{float:right; background:none; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft); padding:0 .3rem;}
+  .modal-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:.7rem;}
+  .modal-field label{display:block; font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:3px;}
+  .modal-field input{width:100%; font-family:'IBM Plex Mono',monospace; font-size:12.5px; padding:.4rem .5rem; border:1px solid var(--line); border-radius:5px;}
+  .modal-field .ro{font-family:'IBM Plex Mono',monospace; font-size:12.5px; padding:.4rem 0; color:var(--ink-soft);}
+  .modal-actions{display:flex; justify-content:flex-end; gap:.5rem; margin-top:1.1rem;}
+  .modal table{margin-top:.5rem;}
+  .modal .mini-note{font-size:10.5px; color:var(--ink-soft); margin:.6rem 0 0;}
+
+  /* ---------- Analysis builder ---------- */
+  .an-panel{background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:1rem 1.1rem; margin-bottom:1rem;}
+  .an-row{display:flex; gap:.9rem; flex-wrap:wrap; align-items:flex-end; margin-bottom:.8rem;}
+  .an-field{display:flex; flex-direction:column; gap:3px;}
+  .an-field label{font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
+  .an-field select, .an-field input[type=text], .an-field input[type=number]{font-family:'IBM Plex Mono',monospace; font-size:12px; padding:.35rem .5rem; border:1px solid var(--line); border-radius:5px; background:#fff;}
+  .an-sec-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); font-weight:600; margin:.2rem 0 .5rem;}
+  .an-chip-row{display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-bottom:.5rem;}
+  .an-chip{display:flex; gap:.4rem; align-items:center; background:var(--shade); border:1px solid var(--line); border-radius:6px; padding:.3rem .5rem;}
+  .an-chip button{border:none; background:none; color:var(--accent); font-size:13px; padding:0 .15rem; cursor:pointer;}
+  .an-divider{height:1px; background:var(--line); margin:.8rem 0;}
+  .group-head{background:#28353c; color:#EDE9DD; cursor:pointer;}
+  .group-head td{padding:.4rem .6rem; font-weight:600; font-size:11.5px; font-family:'IBM Plex Mono',monospace;}
+  .group-head.lvl1{background:#28353c;}
+  .group-head.lvl2{background:#4b5a62;}
+  .subtotal-row td{background:#F0ECE0; font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:11px;}
+  .grandtotal-row td{background:var(--ink); color:#F5F2EA; font-weight:700; font-family:'IBM Plex Mono',monospace; font-size:11.5px;}
+  .views-bar{display:flex; gap:.5rem; align-items:center; flex-wrap:wrap;}
+
+  /* ---------- Analysis: full spreadsheet-style table ---------- */
+  .an-table-scroll{overflow:auto; flex:1; min-height:220px; border:1px solid var(--line); border-radius:9px; background:var(--surface);}
+  .an-table-scroll table{width:max-content; min-width:100%; border-collapse:collapse;}
+  .an-table-scroll thead th{position:sticky; top:0; z-index:2;}
+  th.an-th{white-space:nowrap; vertical-align:middle;}
+  .an-th-inner{display:flex; align-items:center; gap:6px; justify-content:space-between;}
+  .an-th-btn{background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.25); color:inherit; cursor:pointer; padding:1px 6px; font-size:11px; border-radius:4px; line-height:1.4;}
+  .an-th-btn:hover{background:rgba(255,255,255,.2);}
+  .col-badge{font-size:9px; opacity:.85; margin-left:2px;}
+  .an-popover, .an-columns-panel{position:fixed; background:#fff; color:var(--ink); border:1px solid var(--line); border-radius:8px; box-shadow:0 16px 34px rgba(0,0,0,.25); padding:.65rem; z-index:200; width:235px; max-height:420px; overflow-y:auto; font-size:12px;}
+  .an-popover h4, .an-columns-panel h4{margin:.3rem 0 .35rem; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
+  .an-popover h4:first-child, .an-columns-panel h4:first-child{margin-top:0;}
+  .an-popover button.full{display:block; width:100%; text-align:left; margin-bottom:3px; padding:.35rem .5rem; font-size:11.5px;}
+  .an-popover .val-row, .an-columns-panel .val-row{display:flex; align-items:center; gap:6px; padding:2px 0; font-size:11.5px;}
+  .an-popover input[type=text], .an-popover input[type=number], .an-popover select{width:100%; padding:.3rem .4rem; border:1px solid var(--line); border-radius:4px; margin-bottom:5px; font-family:'IBM Plex Mono',monospace; font-size:11.5px;}
+  .an-popover .an-divider{margin:.5rem 0;}
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div class="wrap">
+
+<header>
+  <div>
+    <h1>Landing cost worksheet</h1>
+    <p>NC rate 1.60 &middot; Ex charges 0.15% &middot; VAT 13%</p>
+  </div>
+  <button class="primary" id="addPpdBtn">+ Add Pragyapan Patra</button>
+</header>
+
+<nav class="tabnav">
+  <button class="tab-btn active" data-tab="worksheet" onclick="switchTab('worksheet')">Worksheet</button>
+  <button class="tab-btn" data-tab="records" onclick="switchTab('records')">Saved PPDs</button>
+  <button class="tab-btn" data-tab="analysis" onclick="switchTab('analysis')">Data Analysis</button>
+</nav>
+
+<div id="panel-worksheet" class="panel active">
+<main>
+  <div class="toolbar">
+    <button id="importBtn">Import Excel</button>
+    <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none">
+    <button class="ghost" id="sampleBtn">Download sample template</button>
+    <span id="importStatus" class="import-status-msg" style="font-family:'IBM Plex Mono',monospace; font-size:11px; align-self:center;"></span>
+    <span class="legend"><span class="swatch"></span> = VAT exempt product</span>
+  </div>
+
+  <div id="ppdWrap"></div>
+
+  <div class="summary" id="summaryWrap"></div>
+
+  <div class="stage2-header" id="stage2Header" style="display:none;">
+    <h2>Stage 2 &middot; Post-clearance costing</h2>
+    <p>Agent charges, labour loading/unloading &amp; other import charges &mdash; allocated across products by the same value share used for CSF/CVF/Misc, and added to the Stage 1 landing cost.</p>
+  </div>
+  <div id="stage2Wrap"></div>
+  <div class="summary" id="stage2SummaryWrap"></div>
+</main>
+</div>
+
+<div id="panel-records" class="panel">
+<main>
+  <div class="rec-toolbar">
+    <input type="text" id="recSearch" placeholder="Search company, party, PPD no, branch…" oninput="onRecSearch(this.value)">
+    <span class="rec-count" id="recCount"></span>
+    <span class="sep"></span>
+    <button class="primary" id="exportAllBtn">Export all &middot; PDF</button>
+    <button class="primary" id="exportExcelBtn">Export all &middot; Excel</button>
+    <span id="recImportStatus" class="import-status-msg" style="font-family:'IBM Plex Mono',monospace; font-size:11px; align-self:center;"></span>
+  </div>
+  <div id="recTableWrap"></div>
+</main>
+</div>
+
+<div id="panel-analysis" class="panel">
+<main>
+  <div class="an-panel">
+    <div class="an-row">
+      <div class="an-field">
+        <label>Data level</label>
+        <select id="anLevel" onchange="onAnLevelChange(this.value)">
+          <option value="product">Product (line-item) rows</option>
+          <option value="ppd">PPD (consignment) rows</option>
+        </select>
+      </div>
+      <div class="an-field">
+        <label>Search (all text columns)</label>
+        <input type="text" id="anSearch" placeholder="Search…" oninput="onAnSearch(this.value)">
+      </div>
+      <div class="an-field">
+        <label>&nbsp;</label>
+        <button class="tiny" id="anColumnsBtn" onclick="toggleColumnsPanel()">Columns</button>
+      </div>
+      <div class="an-field">
+        <label>&nbsp;</label>
+        <button class="tiny" style="border-color:var(--green); color:var(--green);" onclick="downloadAnalysisViewExcel()">Download view &middot; Excel</button>
+      </div>
+      <div class="an-field views-bar">
+        <label>Views</label>
+        <div class="views-bar">
+          <select id="anViewSelect" onchange="loadView(this.value)"><option value="">Load a saved view…</option></select>
+          <button class="tiny" onclick="saveCurrentView()">Save view</button>
+          <button class="tiny ghost" onclick="deleteCurrentView()">Delete view</button>
+          <button class="tiny ghost" onclick="resetAnalysis()">Reset</button>
+        </div>
+      </div>
+    </div>
+    <p class="mini-note">Click the <strong>⋮</strong> on any column header to sort, group, filter, change the aggregation, or hide that column. Every column supports its own filter — combine several (plus grouping and sorting) at once.</p>
+    <div class="an-chip-row" id="anGroupChips"></div>
+    <div class="an-chip-row" id="anFilterChips"></div>
+  </div>
+
+  <div class="rec-count" id="anCount" style="margin-bottom:.5rem;"></div>
+  <div id="anResultWrap" class="an-table-scroll"></div>
+</main>
+</div>
+
+<div id="modalRoot"></div>
+
+</div><!-- /.wrap -->
+
+<script>
+/* ============================================================
+   SUPABASE — Step 2 wiring
+   ============================================================ */
+const SUPABASE_URL = "https://cuvpgjuhdfqrlaidiuoz.supabase.co/";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dnBnanVoZGZxcmxhaWRpdW96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0OTYwNzMsImV4cCI6MjEwMTA3MjA3M30.PurE15NAz0oPN1UxhuC5v_DlxTtIRDM1EBjRhWQ8PpM";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const TEST_ORG_ID = '72b585ce-5d6e-4b6d-81bc-c3b3dd80e2e5';
+
+// ---- Load all PPDs + products for the test org ----
+async function loadAllFromSupabase(){
+  const { data: ppdRows, error: ppdErr } = await sb.from('ppds').select('*').eq('org_id', TEST_ORG_ID).order('created_at');
+  if(ppdErr){ console.error('Load ppds failed:', ppdErr); showImportStatus('Could not load from Supabase: '+ppdErr.message, true); return []; }
+  const ids = ppdRows.map(r=>r.id);
+  const { data: prodRows, error: prodErr } = await sb.from('ppd_products').select('*').in('ppd_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']);
+  if(prodErr){ console.error('Load products failed:', prodErr); showImportStatus('Could not load products from Supabase: '+prodErr.message, true); return []; }
+
+  return ppdRows.map(row => ({
+    id:row.id, company:row.company||'', date:row.date||'', ppd:row.ppd_no||'', party:row.party||'',
+    branchName:row.branch_name||'', transportName:row.transport_name||'', insuranceName:row.insurance_name||'',
+    csf:Number(row.csf)||0, cvf:Number(row.cvf)||0, misc:Number(row.misc_costs)||0,
+    agentCharges:Number(row.agent_charges)||0, labourCharges:Number(row.labour_charges)||0, otherImportCharges:Number(row.other_import_charges)||0,
+    status: row.status || 'saved',
+    products: prodRows.filter(pr=>pr.ppd_id===row.id).map(pr=>({
+      id:pr.id, sno:pr.sno||0, product:pr.product_name||'', unit:pr.unit||'',
+      qty:Number(pr.qty)||0, basicIC:Number(pr.basic_am)||0, extFreight:Number(pr.ext_freight)||0,
+      intFreight:Number(pr.int_freight)||0, insurance:Number(pr.insurance)||0, otherCosts:Number(pr.other_costs)||0,
+      deductions:Number(pr.deductions)||0, importDuty:Number(pr.import_duty)||0, exciseDuty:Number(pr.excise_duty)||0,
+      otherDuties:Number(pr.other_duties)||0, exempt:!!pr.exempt, expanded:false
+    }))
+  }));
+}
+
+/* ---------- FIXED SAVE HELPERS (return true/false, always await parent first) ---------- */
+async function saveHeadToSupabase(p){
+  const payload = {
+    id:p.id, org_id:TEST_ORG_ID, company:p.company, date:p.date, ppd_no:p.ppd, party:p.party,
+    branch_name:p.branchName, transport_name:p.transportName, insurance_name:p.insuranceName,
+    csf:p.csf, cvf:p.cvf, misc_costs:p.misc, agent_charges:p.agentCharges,
+    labour_charges:p.labourCharges, other_import_charges:p.otherImportCharges, status:p.status||'draft'
+  };
+  let { error } = await sb.from('ppds').upsert(payload);
+  if(error && /status/i.test(error.message||'')){
+    // "status" column migration hasn't been run yet — retry without it so saves still work.
+    delete payload.status;
+    ({ error } = await sb.from('ppds').upsert(payload));
+  }
+  if(error){
+    console.error('Save PPD failed:', error);
+    showImportStatus('Save failed: '+error.message, true);
+    return false;
+  }
+  return true;
+}
+
+async function saveProductToSupabase(ppdId, pr){
+  const { error } = await sb.from('ppd_products').upsert({
+    id:pr.id, ppd_id:ppdId, sno:pr.sno, product_name:pr.product, unit:pr.unit, qty:pr.qty,
+    basic_am:pr.basicIC, ext_freight:pr.extFreight, int_freight:pr.intFreight, insurance:pr.insurance,
+    other_costs:pr.otherCosts, deductions:pr.deductions, import_duty:pr.importDuty,
+    excise_duty:pr.exciseDuty, other_duties:pr.otherDuties, exempt:pr.exempt
+  });
+  if(error){
+    console.error('Save product failed:', error);
+    showImportStatus('Save failed: '+error.message, true);
+    return false;
+  }
+  return true;
+}
+
+async function deletePpdRemote(id){
+  const { error } = await sb.from('ppds').delete().eq('id', id);
+  if(error){ console.error('Delete PPD failed:', error); showImportStatus('Delete failed: '+error.message, true); }
+}
+async function deleteProductRemote(id){
+  const { error } = await sb.from('ppd_products').delete().eq('id', id);
+  if(error){ console.error('Delete product failed:', error); showImportStatus('Delete failed: '+error.message, true); }
+}
+
+const round2 = n => Math.round((n||0)*100)/100;
+const fmt = n => round2(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+
+const RATE_CIPHER = {'0':'Z','1':'E','2':'B','3':'R','4':'A','5':'F','6':'X','7':'S','8':'T','9':'N','.':'D'};
+
+function twoLetterCode(name){
+  const words = String(name||'').trim().split(/\s+/).filter(Boolean);
+  if(words.length===0) return '';
+  let code = words.length>=2 ? (words[0][0]+words[1][0]) : words[0].slice(-2);
+  return code.toUpperCase().padStart(2,'X').slice(-2);
+}
+function digitsOnly(str){
+  return String(str||'').replace(/[^0-9]/g,'');
+}
+function encodeRate(rate){
+  const r = Math.abs(Number(rate)||0);
+  const fixed = r.toFixed(2);
+  const [intPart, decPart] = fixed.split('.');
+  const paddedInt = intPart.padStart(5,'0');
+  return (paddedInt+'.'+decPart).split('').map(ch=>RATE_CIPHER[ch] || ch).join('');
+}
+function buildBatchCode(p, pr, stage2Rate){
+  const core = twoLetterCode(p.company) + digitsOnly(p.date) + twoLetterCode(p.branchName) + encodeRate(stage2Rate);
+  const ppdDigits = digitsOnly(p.ppd) || 'X';
+  const snoPart = String(pr.sno||'').padStart(2,'0') || '00';
+  return `${core}-${ppdDigits}-${snoPart}`;
+}
+
+let ppds = [];
+let lastComputedPpds = [];
+
+function newProduct(sno){
+  return {
+    id:crypto.randomUUID(), sno, product:'', unit:'', qty:0, basicIC:0,
+    extFreight:0, intFreight:0, insurance:0, otherCosts:0, deductions:0,
+    importDuty:0, exciseDuty:0, otherDuties:0, exempt:false, expanded:false, _dirty:true
+  };
+}
+function newPpd(){
+  return { id:crypto.randomUUID(), company:'', date:'', ppd:'', party:'', branchName:'', transportName:'', insuranceName:'', csf:0, cvf:0, misc:0,
+    agentCharges:0, labourCharges:0, otherImportCharges:0, status:'draft', products:[newProduct(1)], _dirty:true };
+}
+
+/* ---------- FIXED add / delete ---------- */
+function addPpd(){
+  const p = newPpd();
+  ppds.push(p);
+  render();
+  (async () => {
+    const ok = await saveHeadToSupabase(p);
+    if (ok) await saveProductToSupabase(p.id, p.products[0]);
+  })();
+}
+function deletePpd(id){
+  ppds = ppds.filter(p=>p.id!==id);
+  deletePpdRemote(id);
+  render();
+}
+function addProduct(ppdId){
+  const p = ppds.find(x=>x.id===ppdId);
+  const pr = newProduct(p.products.length+1);
+  p.products.push(pr);
+  render();
+  (async () => {
+    // parent already exists, but still await for consistency
+    await saveProductToSupabase(ppdId, pr);
+  })();
+}
+function deleteProduct(ppdId, prodId){
+  const p = ppds.find(x=>x.id===ppdId);
+  p.products = p.products.filter(x=>x.id!==prodId);
+  deleteProductRemote(prodId);
+  render();
+}
+function toggleExpand(ppdId, prodId){
+  const p = ppds.find(x=>x.id===ppdId);
+  const pr = p.products.find(x=>x.id===prodId);
+  pr.expanded = !pr.expanded;
+  render();
+}
+
+const NUMERIC_HEAD = ['csf','cvf','misc','agentCharges','labourCharges','otherImportCharges'];
+const NUMERIC_PROD = ['sno','qty','basicIC','extFreight','intFreight','insurance','otherCosts','deductions','importDuty','exciseDuty','otherDuties'];
+const PASTE_COLS = ['product','unit','qty','basicIC','extFreight','intFreight','insurance','otherCosts','deductions','importDuty','exciseDuty','otherDuties'];
+
+function handlePaste(e, ppdId, prodId, colKey){
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  if(!text) return;
+  e.preventDefault();
+  const rows = text.split(/\r\n|\n|\r/).filter((r,i,arr)=> !(r==='' && i===arr.length-1));
+  if(rows.length===0) return;
+  const p = ppds.find(x=>x.id===ppdId);
+  const startRowIdx = p.products.findIndex(x=>x.id===prodId);
+  const startColIdx = PASTE_COLS.indexOf(colKey);
+  const touched = [];
+  rows.forEach((rowText, i)=>{
+    const targetIdx = startRowIdx + i;
+    while(p.products.length <= targetIdx){
+      p.products.push(newProduct(p.products.length+1));
+    }
+    const target = p.products[targetIdx];
+    const cells = rowText.split('\t');
+    cells.forEach((cellVal, j)=>{
+      const colIdx = startColIdx + j;
+      if(colIdx<0 || colIdx>=PASTE_COLS.length) return;
+      const key = PASTE_COLS[colIdx];
+      const val = cellVal.trim();
+      target[key] = NUMERIC_PROD.includes(key) ? (Number(val.replace(/,/g,''))||0) : val;
+    });
+    touched.push(target);
+  });
+  // save sequentially after parent is known to exist
+  (async () => {
+    for (const pr of touched) {
+      await saveProductToSupabase(ppdId, pr);
+    }
+  })();
+  render();
+}
+
+function updateHead(ppdId, key, val){
+  const p = ppds.find(x=>x.id===ppdId);
+  p[key] = NUMERIC_HEAD.includes(key) ? Number(val)||0 : val;
+  saveHeadToSupabase(p);   // fire-and-forget is fine for single field edits
+  render();
+}
+function updateProduct(ppdId, prodId, key, val){
+  const p = ppds.find(x=>x.id===ppdId);
+  const pr = p.products.find(x=>x.id===prodId);
+  if(key==='exempt'){ pr.exempt = val; }
+  else { pr[key] = NUMERIC_PROD.includes(key) ? Number(val)||0 : val; }
+  saveProductToSupabase(ppdId, pr);  // parent already exists
+  render();
+}
+
+function computePpd(p){
+  const withNC = p.products.map(pr=>({...pr, basicNC: pr.basicIC*1.6}));
+  const totalQty = withNC.reduce((s,pr)=>s+(Number(pr.qty)||0),0);
+  const totalBasicNC = withNC.reduce((s,pr)=>s+pr.basicNC,0);
+
+  const computed = withNC.map(pr=>{
+    const exCharges = pr.basicIC*0.0015;
+    const statValue = pr.basicNC + exCharges + pr.extFreight + pr.intFreight + pr.insurance + pr.otherCosts - pr.deductions;
+    const allocPct = totalBasicNC===0 ? 0 : pr.basicNC/totalBasicNC;
+    const csf = allocPct*p.csf;
+    const cvf = allocPct*p.cvf;
+    const misc = allocPct*p.misc;
+    const preVatBase = round2(statValue + pr.importDuty + pr.exciseDuty + pr.otherDuties + csf + misc);
+    const taxable = pr.exempt ? round2(csf) : preVatBase;
+    const exempted = pr.exempt ? round2(preVatBase - csf) : 0;
+    const vat = round2(taxable*0.13);
+    const landingCost = round2(taxable + exempted + cvf);
+    const landingRate = (Number(pr.qty)||0)===0 ? 0 : round2(landingCost/pr.qty);
+    const mof = round2(pr.importDuty + pr.exciseDuty + pr.otherDuties + vat + csf + cvf);
+
+    const agentAlloc = round2(allocPct*p.agentCharges);
+    const labourAlloc = round2(allocPct*p.labourCharges);
+    const otherImportAlloc = round2(allocPct*p.otherImportCharges);
+    const stage2LandingCost = round2(landingCost + agentAlloc + labourAlloc + otherImportAlloc);
+    const stage2Rate = (Number(pr.qty)||0)===0 ? 0 : round2(stage2LandingCost/pr.qty);
+    const batchCode = buildBatchCode(p, pr, stage2Rate);
+
+    return {...pr, exCharges, statValue, allocPct, csf, cvf, misc, taxable, exempted, vat, landingCost, landingRate, mof,
+      agentAlloc, labourAlloc, otherImportAlloc, stage2LandingCost, stage2Rate, batchCode};
+  });
+
+  return {...p, products:computed, totalQty, totalBasicNC};
+}
+
+function render(){
+  const wrap = document.getElementById('ppdWrap');
+  const computedPpds = ppds.map(computePpd);
+  const draftPpds = computedPpds.filter(p=>p.status!=='saved');
+  if(draftPpds.length===0){
+    wrap.innerHTML = `<div class="empty">No Pragyapan Patra in progress. Click "+ Add Pragyapan Patra" to begin, or check the Saved PPDs tab for finished ones.</div>`;
+  } else {
+    wrap.innerHTML = draftPpds.map(p=>`
+      <div class="ppd" id="ppd-card-${p.id}">
+        <div class="ppd-sec-label">Consignment details</div>
+        <div class="ppd-head">
+          <div class="grp"><label>Company name</label><input class="wide" value="${p.company}" onchange="updateHead('${p.id}','company',this.value)"></div>
+          <div class="grp"><label>Date</label><input class="narrow" value="${p.date}" onchange="updateHead('${p.id}','date',this.value)"></div>
+          <div class="grp"><label>PPD no</label><input class="narrow" value="${p.ppd}" onchange="updateHead('${p.id}','ppd',this.value)"></div>
+          <div class="grp"><label>Party</label><input class="wide" value="${p.party}" onchange="updateHead('${p.id}','party',this.value)"></div>
+          <div class="grp"><label>CSF</label><input class="narrow" type="number" value="${p.csf}" onchange="updateHead('${p.id}','csf',this.value)"></div>
+          <div class="grp"><label>CVF</label><input class="narrow" type="number" value="${p.cvf}" onchange="updateHead('${p.id}','cvf',this.value)"></div>
+          <div class="grp"><label>Misc costs</label><input class="narrow" type="number" value="${p.misc}" onchange="updateHead('${p.id}','misc',this.value)"></div>
+          <div class="readout">Qty ${fmt(p.totalQty)}<br>Basic NC ${fmt(p.totalBasicNC)}</div>
+          <button class="tiny" onclick="addProduct('${p.id}')">+ Product</button>
+          <button class="tiny" onclick="exportPpdPdf('${p.id}')">Export PDF</button>
+          <button class="tiny del" onclick="deletePpd('${p.id}')">Delete PPD</button>
+          <button class="tiny" style="border-color:var(--green); color:var(--green);" onclick="savePpdToSavedList('${p.id}')">Save PPD</button>
+          <div class="divider"></div>
+          <div class="grp branch"><label>Branch name</label><input class="wide" value="${p.branchName}" onchange="updateHead('${p.id}','branchName',this.value)"></div>
+          <div class="grp transport"><label>Transport name</label><input class="wide" value="${p.transportName}" onchange="updateHead('${p.id}','transportName',this.value)"></div>
+          <div class="grp insurance"><label>Insurance name</label><input class="extra-wide" value="${p.insuranceName}" onchange="updateHead('${p.id}','insuranceName',this.value)"></div>
+        </div>
+        <div class="ppd-sec-label">Item-wise cost, duty &amp; VAT entry</div>
+        <div class="h-scroll">
+        <table class="calc-table">
+          <colgroup>
+            <col style="width:34px"><col><col style="width:56px"><col style="width:60px">
+            <col style="width:80px"><col style="width:44px"><col style="width:90px"><col style="width:90px">
+            <col style="width:70px"><col style="width:96px"><col style="width:80px"><col style="width:60px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>#</th><th class="left">Product</th><th class="left">Unit</th><th>Qty</th>
+              <th>Basic (IC)</th><th title="Tick if this line is VAT exempt">Exempt</th><th>Taxable</th><th>Exempted</th>
+              <th>VAT</th><th>Landing cost</th><th>Rate</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+          ${p.products.map(pr=>`
+            <tr class="${pr.exempt?'exempt-row':''}">
+              <td class="left"><input class="text" type="number" value="${pr.sno}" onchange="updateProduct('${p.id}','${pr.id}','sno',this.value)"></td>
+              <td class="left"><input class="text" value="${pr.product}" onchange="updateProduct('${p.id}','${pr.id}','product',this.value)" onpaste="handlePaste(event,'${p.id}','${pr.id}','product')"></td>
+              <td class="left"><input class="text" value="${pr.unit}" onchange="updateProduct('${p.id}','${pr.id}','unit',this.value)" onpaste="handlePaste(event,'${p.id}','${pr.id}','unit')"></td>
+              <td><input type="number" value="${pr.qty}" onchange="updateProduct('${p.id}','${pr.id}','qty',this.value)" onpaste="handlePaste(event,'${p.id}','${pr.id}','qty')"></td>
+              <td><input type="number" value="${pr.basicIC}" onchange="updateProduct('${p.id}','${pr.id}','basicIC',this.value)" onpaste="handlePaste(event,'${p.id}','${pr.id}','basicIC')"></td>
+              <td style="text-align:center;"><input type="checkbox" class="exempt-toggle" ${pr.exempt?'checked':''} onchange="updateProduct('${p.id}','${pr.id}','exempt',this.checked)"></td>
+              <td class="taxable-val">${fmt(pr.taxable)}</td>
+              <td class="exempted-val">${fmt(pr.exempted)}</td>
+              <td>${fmt(pr.vat)}</td>
+              <td>${fmt(pr.landingCost)}</td>
+              <td class="rate">${fmt(pr.landingRate)}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="tiny" onclick="toggleExpand('${p.id}','${pr.id}')">${pr.expanded?'&minus;':'&plus;'}</button>
+                  <button class="tiny" style="color:var(--accent)" onclick="deleteProduct('${p.id}','${pr.id}')">&times;</button>
+                </div>
+              </td>
+            </tr>
+            ${pr.expanded? `
+            <tr class="detail"><td colspan="12">
+              <div class="ppd-sec-label" style="padding:.4rem .9rem 0;">Cost breakdown &mdash; freight, insurance, duties &amp; allocation</div>
+              <div class="detail-inner">
+                <div class="detail-field"><label>Ext freight</label><input type="number" value="${pr.extFreight}" onchange="updateProduct('${p.id}','${pr.id}','extFreight',this.value)" onpaste="handlePaste(event,'${p.id}','${pr.id}','extFreight')"></div>
+                <div class="detail-field"><label>Int freight</label><input type="number" value="${pr.intFreight}" onchange="updateProduct('${p.id}','${pr.id}','intFreight',this.value)" onpaste="handlePaste(event,'${p.id}','${pr.id}','intFreight')"></div>
+                <div class="detail-field"><label>Insurance</label><input type="number" value="${pr.insurance}" onchange="updateProduct('${p.id}','${pr.id}','insurance',this.value)" onpaste="handlePaste(event,'${p.id}','${pr.id}','insurance')"></div>
+                <div class="detail-field"><label>Other costs</label><input type="number" value="${pr.otherCosts}" onchange="updateProduct('${p.id}','${pr.id}','otherCosts',this.value)" onpaste="handlePaste(event,'${p.id}','${pr.id}','otherCosts')"></div>
+                <div class="detail-field"><label>Deductions</label><input type="number" value="${pr.deductions}" onchange="updateProduct('${p.id}','${pr.id}','deductions',this.value)" onpaste="handlePaste(event,'${p.id}','${pr.id}','deductions')"></div>
+                <div class="detail-field"><label>Import duty</label><input type="number" value="${pr.importDuty}" onchange="updateProduct('${p.id}','${pr.id}','importDuty',this.value)" onpaste="handlePaste(event,'${p.id}','${pr.id}','importDuty')"></div>
+                <div class="detail-field"><label>Excise duty</label><input type="number" value="${pr.exciseDuty}" onchange="updateProduct('${p.id}','${pr.id}','exciseDuty',this.value)" onpaste="handlePaste(event,'${p.id}','${pr.id}','exciseDuty')"></div>
+                <div class="detail-field"><label>Other duties</label><input type="number" value="${pr.otherDuties}" onchange="updateProduct('${p.id}','${pr.id}','otherDuties',this.value)" onpaste="handlePaste(event,'${p.id}','${pr.id}','otherDuties')"></div>
+                <div class="detail-field"><label>Basic (NC)</label><div class="ro">${fmt(pr.basicNC)}</div></div>
+                <div class="detail-field"><label>Ex charges</label><div class="ro">${fmt(pr.exCharges)}</div></div>
+                <div class="detail-field"><label>Statistical value</label><div class="ro">${fmt(pr.statValue)}</div></div>
+                <div class="detail-field"><label>Alloc share</label><div class="ro">${(pr.allocPct*100).toFixed(1)}%</div></div>
+                <div class="detail-field"><label>CSF (alloc)</label><div class="ro">${fmt(pr.csf)}</div></div>
+                <div class="detail-field"><label>CVF (alloc)</label><div class="ro">${fmt(pr.cvf)}</div></div>
+                <div class="detail-field"><label>Misc (alloc)</label><div class="ro">${fmt(pr.misc)}</div></div>
+                <div class="detail-field"><label>Dept of customs</label><div class="ro">${fmt(pr.mof)}</div></div>
+              </div>
+            </td></tr>` : ''}
+          `).join('')}
+          </tbody>
+        </table>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const all = draftPpds.flatMap(p=>p.products);
+  const totalQty = all.reduce((s,r)=>s+(Number(r.qty)||0),0);
+  const totalBasicIC = all.reduce((s,r)=>s+(Number(r.basicIC)||0),0);
+  const totalBasicNC = all.reduce((s,r)=>s+(Number(r.basicNC)||0),0);
+  const totalExCharges = all.reduce((s,r)=>s+r.exCharges,0);
+  const totalExtFreight = all.reduce((s,r)=>s+(Number(r.extFreight)||0),0);
+  const totalIntFreight = all.reduce((s,r)=>s+(Number(r.intFreight)||0),0);
+  const totalInsurance = all.reduce((s,r)=>s+(Number(r.insurance)||0),0);
+  const totalOtherCosts = all.reduce((s,r)=>s+(Number(r.otherCosts)||0),0);
+  const totalDeductions = all.reduce((s,r)=>s+(Number(r.deductions)||0),0);
+  const totalStatValue = all.reduce((s,r)=>s+r.statValue,0);
+  const totalImportDuty = all.reduce((s,r)=>s+(Number(r.importDuty)||0),0);
+  const totalExciseDuty = all.reduce((s,r)=>s+(Number(r.exciseDuty)||0),0);
+  const totalOtherDuties = all.reduce((s,r)=>s+(Number(r.otherDuties)||0),0);
+  const totalCsf = all.reduce((s,r)=>s+r.csf,0);
+  const totalCvf = all.reduce((s,r)=>s+r.cvf,0);
+  const totalMisc = all.reduce((s,r)=>s+r.misc,0);
+  const totalTaxable = all.reduce((s,r)=>s+r.taxable,0);
+  const totalExempted = all.reduce((s,r)=>s+r.exempted,0);
+  const totalVat = all.reduce((s,r)=>s+r.vat,0);
+  const totalLanding = all.reduce((s,r)=>s+r.landingCost,0);
+  const totalMof = all.reduce((s,r)=>s+r.mof,0);
+  document.getElementById('summaryWrap').innerHTML = `
+    <div class="metric"><div class="label">Total qty</div><div class="val">${fmt(totalQty)}</div></div>
+    <div class="metric"><div class="label">Total basic (IC)</div><div class="val">${fmt(totalBasicIC)}</div></div>
+    <div class="metric"><div class="label">Total basic (NC)</div><div class="val">${fmt(totalBasicNC)}</div></div>
+    <div class="metric"><div class="label">Total ex charges</div><div class="val">${fmt(totalExCharges)}</div></div>
+    <div class="metric"><div class="label">Total ext freight</div><div class="val">${fmt(totalExtFreight)}</div></div>
+    <div class="metric"><div class="label">Total int freight</div><div class="val">${fmt(totalIntFreight)}</div></div>
+    <div class="metric"><div class="label">Total insurance</div><div class="val">${fmt(totalInsurance)}</div></div>
+    <div class="metric"><div class="label">Total other costs</div><div class="val">${fmt(totalOtherCosts)}</div></div>
+    <div class="metric"><div class="label">Total deductions</div><div class="val">${fmt(totalDeductions)}</div></div>
+    <div class="metric"><div class="label">Total statistical value</div><div class="val">${fmt(totalStatValue)}</div></div>
+    <div class="metric"><div class="label">Total import duty</div><div class="val">${fmt(totalImportDuty)}</div></div>
+    <div class="metric"><div class="label">Total excise duty</div><div class="val">${fmt(totalExciseDuty)}</div></div>
+    <div class="metric"><div class="label">Total other duties</div><div class="val">${fmt(totalOtherDuties)}</div></div>
+    <div class="metric"><div class="label">Total CSF</div><div class="val">${fmt(totalCsf)}</div></div>
+    <div class="metric"><div class="label">Total CVF</div><div class="val">${fmt(totalCvf)}</div></div>
+    <div class="metric"><div class="label">Total misc costs</div><div class="val">${fmt(totalMisc)}</div></div>
+    <div class="metric"><div class="label">Total taxable</div><div class="val">${fmt(totalTaxable)}</div></div>
+    <div class="metric amber"><div class="label">Total exempted</div><div class="val">${fmt(totalExempted)}</div></div>
+    <div class="metric"><div class="label">Total VAT</div><div class="val">${fmt(totalVat)}</div></div>
+    <div class="metric accent"><div class="label">Total landing cost</div><div class="val">${fmt(totalLanding)}</div></div>
+    <div class="metric green"><div class="label">Total to dept of customs</div><div class="val">${fmt(totalMof)}</div></div>
+  `;
+
+  renderStage2(draftPpds);
+
+  lastComputedPpds = computedPpds;
+  renderRecords();
+  renderAnalysis();
+}
+
+function renderStage2(computedPpds){
+  const header = document.getElementById('stage2Header');
+  const wrap = document.getElementById('stage2Wrap');
+  const summaryWrap = document.getElementById('stage2SummaryWrap');
+
+  if(computedPpds.length===0){
+    header.style.display = 'none';
+    wrap.innerHTML = '';
+    summaryWrap.innerHTML = '';
+    return;
+  }
+  header.style.display = '';
+
+  wrap.innerHTML = computedPpds.map(p=>`
+    <div class="ppd">
+      <div class="ppd-sec-label">Consignment</div>
+      <div class="ppd-head">
+        <div class="grp"><label>Company name</label><div class="ro" style="font-family:'IBM Plex Mono',monospace; font-size:12px; padding:.3rem 0;">${p.company||'&mdash;'}</div></div>
+        <div class="grp"><label>Date</label><div class="ro" style="font-family:'IBM Plex Mono',monospace; font-size:12px; padding:.3rem 0;">${p.date||'&mdash;'}</div></div>
+        <div class="grp"><label>PPD no</label><div class="ro" style="font-family:'IBM Plex Mono',monospace; font-size:12px; padding:.3rem 0;">${p.ppd||'&mdash;'}</div></div>
+        <div class="grp"><label>Party</label><div class="ro" style="font-family:'IBM Plex Mono',monospace; font-size:12px; padding:.3rem 0;">${p.party||'&mdash;'}</div></div>
+        <div class="divider"></div>
+        <div class="grp s2"><label>Agent charges (VAT bill)</label><input class="narrow" type="number" value="${p.agentCharges}" onchange="updateHead('${p.id}','agentCharges',this.value)"></div>
+        <div class="grp s2"><label>Labour loading/unloading</label><input class="narrow" type="number" value="${p.labourCharges}" onchange="updateHead('${p.id}','labourCharges',this.value)"></div>
+        <div class="grp s2"><label>Other import charges</label><input class="narrow" type="number" value="${p.otherImportCharges}" onchange="updateHead('${p.id}','otherImportCharges',this.value)"></div>
+        <div class="readout">Stage 2 total ${fmt(p.products.reduce((s,pr)=>s+pr.stage2LandingCost,0))}</div>
+      </div>
+      <div class="h-scroll">
+      <table class="calc-table">
+        <colgroup>
+          <col style="width:34px"><col><col style="width:56px"><col style="width:60px">
+          <col style="width:90px"><col style="width:90px"><col style="width:80px"><col style="width:90px"><col style="width:100px"><col style="width:70px"><col style="width:170px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>#</th><th class="left">Product</th><th class="left">Unit</th><th>Qty</th>
+            <th>Stage 1 landing cost</th><th>Agent (alloc)</th><th>Labour (alloc)</th><th>Other (alloc)</th>
+            <th>Stage 2 landing cost</th><th>Stage 2 rate</th><th class="left" title="Auto-generated: Company + Date + Branch + Stage 2 rate (ciphered) + PPD no + S.no">Batch code</th>
+          </tr>
+        </thead>
+        <tbody>
+        ${p.products.map(pr=>`
+          <tr class="${pr.exempt?'exempt-row':''}">
+            <td class="left">${pr.sno}</td>
+            <td class="left">${pr.product||'&mdash;'}</td>
+            <td class="left">${pr.unit||'&mdash;'}</td>
+            <td>${fmt(pr.qty)}</td>
+            <td>${fmt(pr.landingCost)}</td>
+            <td>${fmt(pr.agentAlloc)}</td>
+            <td>${fmt(pr.labourAlloc)}</td>
+            <td>${fmt(pr.otherImportAlloc)}</td>
+            <td class="s2-val">${fmt(pr.stage2LandingCost)}</td>
+            <td class="s2-rate">${fmt(pr.stage2Rate)}</td>
+            <td class="left batch-code">${pr.batchCode}</td>
+          </tr>
+        `).join('')}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  `).join('');
+
+  const all2 = computedPpds.flatMap(p=>p.products);
+  const totalAgent = all2.reduce((s,r)=>s+r.agentAlloc,0);
+  const totalLabour = all2.reduce((s,r)=>s+r.labourAlloc,0);
+  const totalOtherImport = all2.reduce((s,r)=>s+r.otherImportAlloc,0);
+  const totalStage2Landing = all2.reduce((s,r)=>s+r.stage2LandingCost,0);
+  summaryWrap.innerHTML = `
+    <div class="metric"><div class="label">Total agent charges</div><div class="val">${fmt(totalAgent)}</div></div>
+    <div class="metric"><div class="label">Total labour loading/unloading</div><div class="val">${fmt(totalLabour)}</div></div>
+    <div class="metric"><div class="label">Total other import charges</div><div class="val">${fmt(totalOtherImport)}</div></div>
+    <div class="metric accent"><div class="label">Total stage 2 landing cost</div><div class="val">${fmt(totalStage2Landing)}</div></div>
+  `;
+}
+
+document.getElementById('addPpdBtn').addEventListener('click', addPpd);
+
+function normalize(s){ return String(s).toLowerCase().replace(/[^a-z0-9]/g,''); }
+function parseNum(v){ if(v===''||v==null) return 0; return Number(String(v).replace(/,/g,'').trim())||0; }
+
+const IMPORT_ALIASES = {
+  company:['companyname','company'],
+  date:['date'],
+  ppd:['ppdno','ppd','pragyapanpatrano'],
+  party:['party'],
+  branchName:['branchname','branch'],
+  transportName:['transportname','transport'],
+  insuranceName:['insurancename'],
+  csf:['csf'],
+  cvf:['cvf'],
+  misc:['misccosts','misccost','misc'],
+  agentCharges:['agentcharges','agentchargesvatbill','agentcharge'],
+  labourCharges:['labourcharges','labourloadingunloading','labourcharge'],
+  otherImportCharges:['otherimportcharges','otherimportcharge'],
+  sno:['sno'],
+  product:['productname','product'],
+  unit:['unit'],
+  qty:['qty','quantity'],
+  basicIC:['basicamic','basicic','basicamountic'],
+  extFreight:['externalfreight','extfreight'],
+  intFreight:['internalfreight','intfreight'],
+  insurance:['insurance'],
+  otherCosts:['othercosts'],
+  deductions:['deductions'],
+  importDuty:['importduty'],
+  exciseDuty:['exciseduty'],
+  otherDuties:['otherduties'],
+  exempt:['exempt','exempted','vatexempt']
+};
+
+function buildHeaderMap(keys){
+  const map = {};
+  keys.forEach(h=>{
+    const n = normalize(h);
+    Object.keys(IMPORT_ALIASES).forEach(key=>{
+      if(!map[key] && IMPORT_ALIASES[key].includes(n)) map[key] = h;
+    });
+  });
+  return map;
+}
+
+function showImportStatus(msg, isError){
+  document.querySelectorAll('.import-status-msg').forEach(el=>{
+    el.textContent = msg;
+    el.style.color = isError ? 'var(--accent)' : 'var(--green)';
+  });
+}
+
+/* ---------- FIXED IMPORT (await parent, then children, one PPD at a time) ---------- */
+function handleImportFile(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    try{
+      const data = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(data,{type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws,{defval:'', raw:false});
+      if(rows.length===0){ showImportStatus('No rows found in that file.', true); return; }
+      const headerMap = buildHeaderMap(Object.keys(rows[0]));
+      const required = ['product','qty','basicIC'];
+      const missing = required.filter(k=>!headerMap[k]);
+      if(missing.length){ showImportStatus('Missing required column(s): '+missing.join(', '), true); return; }
+
+      const groups = {};
+      const order = [];
+      rows.forEach(row=>{
+        const get = k => headerMap[k] ? String(row[headerMap[k]] ?? '').trim() : '';
+        const company = get('company'), date = get('date'), ppdNo = get('ppd'), party = get('party');
+        const gk = normalize(company)+'|'+normalize(date)+'|'+normalize(ppdNo)+'|'+normalize(party);
+        if(!groups[gk]){
+          const g = newPpd();
+          g.company = company; g.date = date; g.ppd = ppdNo; g.party = party;
+          g.branchName = get('branchName');
+          g.transportName = get('transportName');
+          g.insuranceName = get('insuranceName');
+          g.csf = parseNum(get('csf'));
+          g.cvf = parseNum(get('cvf'));
+          g.misc = parseNum(get('misc'));
+          g.agentCharges = parseNum(get('agentCharges'));
+          g.labourCharges = parseNum(get('labourCharges'));
+          g.otherImportCharges = parseNum(get('otherImportCharges'));
+          g.products = [];
+          groups[gk] = g;
+          order.push(gk);
+        }
+        const g = groups[gk];
+        const prod = newProduct(g.products.length+1);
+        const snoVal = get('sno');
+        prod.sno = snoVal ? parseNum(snoVal) : g.products.length+1;
+        prod.product = get('product');
+        prod.unit = get('unit');
+        prod.qty = parseNum(get('qty'));
+        prod.basicIC = parseNum(get('basicIC'));
+        prod.extFreight = parseNum(get('extFreight'));
+        prod.intFreight = parseNum(get('intFreight'));
+        prod.insurance = parseNum(get('insurance'));
+        prod.otherCosts = parseNum(get('otherCosts'));
+        prod.deductions = parseNum(get('deductions'));
+        prod.importDuty = parseNum(get('importDuty'));
+        prod.exciseDuty = parseNum(get('exciseDuty'));
+        prod.otherDuties = parseNum(get('otherDuties'));
+        const exemptRaw = get('exempt').toLowerCase();
+        prod.exempt = ['y','yes','true','1'].includes(exemptRaw);
+        g.products.push(prod);
+      });
+
+      const imported = order.map(k=>groups[k]);
+      ppds = ppds.concat(imported);
+      render();
+
+      // CRITICAL FIX: sequential await — parent first, then its products
+      (async () => {
+        showImportStatus('Saving to Supabase…', false);
+        for (const p of imported) {
+          const ok = await saveHeadToSupabase(p);
+          if (!ok) return;
+          for (const pr of p.products) {
+            const pok = await saveProductToSupabase(p.id, pr);
+            if (!pok) return;
+          }
+        }
+        showImportStatus(`Imported ${imported.length} PPD(s), ${rows.length} product line(s).`, false);
+      })();
+
+    }catch(err){
+      showImportStatus('Could not read that file: '+err.message, true);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  e.target.value = '';
+}
+
+const INPUT_HEADERS = ['Company Name','Date','PPD No','Party','Branch Name','Transport Name','Insurance Name',
+  'CSF','CVF','Misc Costs','Agent Charges','Labour Charges','Other Import Charges',
+  'S.no','Product Name','Unit','Qty','Basic A/m (IC)','External Freight','Internal Freight','Insurance',
+  'Other Costs','Deductions','Import Duty','Excise Duty','Other Duties','Exempt'];
+const COMPUTED_HEADERS = ['Basic A/m (NC)','Ex Charges','Statistical Value','Alloc Share %',
+  'CSF (Alloc)','CVF (Alloc)','Misc (Alloc)','Taxable Amount','Exempted Amount','VAT','Landing Cost','Landing Rate',
+  'Department Of Customs (MOF)','Agent Charges (Alloc)','Labour Charges (Alloc)','Other Import Charges (Alloc)',
+  'Stage 2 Landing Cost','Stage 2 Rate','Batch Code'];
+const DATE_COL_INDEX = INPUT_HEADERS.indexOf('Date');
+
+function forceTextColumn(ws, colIndex, rowCount){
+  for(let r=1; r<=rowCount; r++){
+    const addr = XLSX.utils.encode_cell({r, c:colIndex});
+    const cell = ws[addr];
+    if(cell){ cell.t = 's'; cell.v = String(cell.v); cell.z = '@'; delete cell.w; }
+  }
+}
+
+function downloadSample(){
+  const sample = [
+    ['Everest Trading Co Pvt Ltd','2026-07-01','208283','ABC Traders Pvt Ltd','Kathmandu Branch','Everest Cargo Movers','Prudential Insurance Co',
+      15000,42000,8000,5000,3000,1200, 1,'Steel Rod 12mm','KG',5000,120000,3200,1800,900,0,0,45000,0,0,'No'],
+    ['Everest Trading Co Pvt Ltd','2026-07-01','208283','ABC Traders Pvt Ltd','Kathmandu Branch','Everest Cargo Movers','Prudential Insurance Co',
+      15000,42000,8000,5000,3000,1200, 2,'Steel Sheet 2mm','KG',3000,80000,2100,1200,600,0,0,30000,0,0,'No'],
+    ['Everest Trading Co Pvt Ltd','2026-07-01','208283','ABC Traders Pvt Ltd','Kathmandu Branch','Everest Cargo Movers','Prudential Insurance Co',
+      15000,42000,8000,5000,3000,1200, 3,'Agricultural Seeds','KG',1000,25000,650,400,200,0,0,0,0,0,'Yes'],
+    ['Himalayan Imports Pvt Ltd','2026-07-05','208312','XYZ Imports Pvt Ltd','Pokhara Branch','Annapurna Logistics','Sagarmatha Insurance Co',
+      9000,21000,4000,2500,1500,600, 1,'Cotton Fabric','MTR',8000,150000,4000,2200,1100,0,0,20000,0,0,'No']
+  ];
+  const ws = XLSX.utils.aoa_to_sheet([INPUT_HEADERS, ...sample]);
+  forceTextColumn(ws, DATE_COL_INDEX, sample.length);
+  ws['!cols'] = INPUT_HEADERS.map(()=>({wch:16}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'PPD Import');
+  XLSX.writeFile(wb, 'landing_cost_import_template.xlsx');
+}
+
+function xlDigits(cellRef){
+  let expr = cellRef;
+  ['-','/','.',',',' '].forEach(sep=>{ expr = `SUBSTITUTE(${expr},"${sep}","")`; });
+  return expr;
+}
+function xlTwoLetterCode(cellRef){
+  const t = `TRIM(${cellRef})`;
+  const sp1 = `IFERROR(FIND(" ",${t}),0)`;
+  const w1 = `IF(${sp1}=0,${t},LEFT(${t},${sp1}-1))`;
+  const rest = `IF(${sp1}=0,"",MID(${t},${sp1}+1,LEN(${t})))`;
+  const sp2 = `IFERROR(FIND(" ",${rest}),0)`;
+  const w2 = `IF(${rest}="","",IF(${sp2}=0,${rest},LEFT(${rest},${sp2}-1)))`;
+  const code = `IF(${w2}<>"",LEFT(${w1},1)&LEFT(${w2},1),RIGHT(${w1},2))`;
+  const up = `UPPER(${code})`;
+  const padded = `IF(LEN(${up})=1,"X"&${up},${up})`;
+  return `RIGHT(${padded},2)`;
+}
+function xlEncodeRate(cellRef){
+  let expr = `TEXT(ABS(${cellRef}),"00000.00")`;
+  [['0','Z'],['1','E'],['2','B'],['3','R'],['4','A'],['5','F'],['6','X'],['7','S'],['8','T'],['9','N'],['.','D']]
+    .forEach(([a,b])=>{ expr = `SUBSTITUTE(${expr},"${a}","${b}")`; });
+  return expr;
+}
+
+function exportAllExcel(){
+  if(ppds.length===0){ showImportStatus('No Pragyapan Patra to export.', true); return; }
+  const headers = INPUT_HEADERS.concat(COMPUTED_HEADERS);
+  const L = XLSX.utils.encode_col;
+
+  const IN = {company:0,date:1,ppd:2,party:3,branch:4,transport:5,insur:6,
+    csf:7,cvf:8,misc:9,agent:10,labour:11,otherImp:12,
+    sno:13,product:14,unit:15,qty:16,basicIC:17,extFreight:18,intFreight:19,insurance:20,
+    otherCosts:21,deductions:22,importDuty:23,exciseDuty:24,otherDuties:25,exempt:26};
+  const CP = {basicNC:27,exCharges:28,statValue:29,allocPct:30,csfAlloc:31,cvfAlloc:32,miscAlloc:33,
+    taxable:34,exempted:35,vat:36,landingCost:37,landingRate:38,mof:39,
+    agentAlloc:40,labourAlloc:41,otherImpAlloc:42,stage2Landing:43,stage2Rate:44,batchCode:45};
+
+  const rows = [];
+  const groups = [];
+  let rowPtr = 2;
+  ppds.map(computePpd).forEach(p=>{
+    const start = rowPtr;
+    p.products.forEach(pr=>{
+      rows.push([
+        p.company, p.date, p.ppd, p.party, p.branchName, p.transportName, p.insuranceName,
+        p.csf, p.cvf, p.misc, p.agentCharges, p.labourCharges, p.otherImportCharges,
+        pr.sno, pr.product, pr.unit, pr.qty, pr.basicIC, pr.extFreight, pr.intFreight, pr.insurance,
+        pr.otherCosts, pr.deductions, pr.importDuty, pr.exciseDuty, pr.otherDuties, pr.exempt ? 'Yes' : 'No',
+        '','','','','','','','','','','','','','','','','','',''
+      ]);
+      rowPtr++;
+    });
+    groups.push({start, end: rowPtr-1});
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  forceTextColumn(ws, DATE_COL_INDEX, rows.length);
+  ws['!cols'] = headers.map(()=>({wch:15}));
+
+  groups.forEach(g=>{
+    const basicIcRange = `${L(IN.basicIC)}${g.start}:${L(IN.basicIC)}${g.end}`;
+    for(let r=g.start; r<=g.end; r++){
+      const ref = c => `${L(IN[c])}${r}`;
+      const cp = c => `${L(CP[c])}${r}`;
+      const setNum = (col, f) => { ws[`${L(col)}${r}`] = {t:'n', f}; };
+      const setStr = (col, f) => { ws[`${L(col)}${r}`] = {t:'str', f}; };
+
+      const basicNcRaw = `${ref('basicIC')}*1.6`;
+      const exChargesRaw = `${ref('basicIC')}*0.0015`;
+      const statValueRaw = `${basicNcRaw}+${exChargesRaw}+${ref('extFreight')}+${ref('intFreight')}+${ref('insurance')}+${ref('otherCosts')}-${ref('deductions')}`;
+      const ratio = `IF(SUM(${basicIcRange})=0,0,(${basicNcRaw})/(SUM(${basicIcRange})*1.6))`;
+      const csfRaw = `(${ratio})*${ref('csf')}`;
+      const cvfRaw = `(${ratio})*${ref('cvf')}`;
+      const miscRaw = `(${ratio})*${ref('misc')}`;
+      const preVat = `ROUND(${statValueRaw}+${ref('importDuty')}+${ref('exciseDuty')}+${ref('otherDuties')}+${csfRaw}+${miscRaw},2)`;
+
+      setNum(CP.basicNC,      `ROUND(${basicNcRaw},2)`);
+      setNum(CP.exCharges,    `ROUND(${exChargesRaw},2)`);
+      setNum(CP.statValue,    `ROUND(${statValueRaw},2)`);
+      setNum(CP.allocPct,     `ROUND((${ratio})*100,2)`);
+      setNum(CP.csfAlloc,     `ROUND(${csfRaw},2)`);
+      setNum(CP.cvfAlloc,     `ROUND(${cvfRaw},2)`);
+      setNum(CP.miscAlloc,    `ROUND(${miscRaw},2)`);
+      setNum(CP.taxable,      `IF(${ref('exempt')}="Yes",ROUND(${csfRaw},2),${preVat})`);
+      setNum(CP.exempted,     `IF(${ref('exempt')}="Yes",ROUND(${preVat}-(${csfRaw}),2),0)`);
+      setNum(CP.vat,          `ROUND(${cp('taxable')}*0.13,2)`);
+      setNum(CP.landingCost,  `ROUND(${cp('taxable')}+${cp('exempted')}+${cvfRaw},2)`);
+      setNum(CP.landingRate,  `IF(${ref('qty')}=0,0,ROUND(${cp('landingCost')}/${ref('qty')},2))`);
+      setNum(CP.mof,          `ROUND(${ref('importDuty')}+${ref('exciseDuty')}+${ref('otherDuties')}+${cp('vat')}+${csfRaw}+${cvfRaw},2)`);
+      setNum(CP.agentAlloc,   `ROUND((${ratio})*${ref('agent')},2)`);
+      setNum(CP.labourAlloc,  `ROUND((${ratio})*${ref('labour')},2)`);
+      setNum(CP.otherImpAlloc,`ROUND((${ratio})*${ref('otherImp')},2)`);
+      setNum(CP.stage2Landing,`ROUND(${cp('landingCost')}+${cp('agentAlloc')}+${cp('labourAlloc')}+${cp('otherImpAlloc')},2)`);
+      setNum(CP.stage2Rate,   `IF(${ref('qty')}=0,0,ROUND(${cp('stage2Landing')}/${ref('qty')},2))`);
+
+      const ppdDigits = xlDigits(ref('ppd'));
+      const batchFormula = `${xlTwoLetterCode(ref('company'))}&${xlDigits(ref('date'))}&${xlTwoLetterCode(ref('branch'))}&${xlEncodeRate(cp('stage2Rate'))}`
+        + `&"-"&IF(${ppdDigits}="","X",${ppdDigits})&"-"&TEXT(${ref('sno')},"00")`;
+      setStr(CP.batchCode, batchFormula);
+    }
+  });
+
+  ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:rows.length, c:headers.length-1}});
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Landing Cost Export');
+  XLSX.writeFile(wb, 'landing_cost_full_export.xlsx');
+}
+
+document.getElementById('importBtn').addEventListener('click', ()=>document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', handleImportFile);
+document.getElementById('sampleBtn').addEventListener('click', downloadSample);
+document.getElementById('exportAllBtn').addEventListener('click', exportAllPdf);
+document.getElementById('exportExcelBtn').addEventListener('click', exportAllExcel);
+
+/* ---------- PDF export ---------- */
+function drawInfoHeader(doc, p, startY){
+  const leftBody = [
+    ['COMPANY', p.company || ''],
+    ['PPD NO', p.ppd || ''],
+    ['DATE', p.date || ''],
+    ['PARTY', p.party || '']
+  ];
+  doc.autoTable({
+    startY, body: leftBody, theme:'grid',
+    styles:{fontSize:9, cellPadding:4, lineColor:[180,180,180], lineWidth:0.5},
+    columnStyles:{0:{cellWidth:65, fillColor:[214,228,240], fontStyle:'bold'}, 1:{cellWidth:225}},
+    margin:{left:30}
+  });
+  const leftFinalY = doc.lastAutoTable.finalY;
+
+  const rightBody = [
+    [`BRANCH NAME : ${p.branchName || ''}`],
+    [`TRANSPORT NAME : ${p.transportName || ''}`],
+    [`INSURANCE NAME : ${p.insuranceName || ''}`]
+  ];
+  const rightFillColors = [[214,214,138],[255,255,0],[244,196,140]];
+  doc.autoTable({
+    startY, body: rightBody, theme:'grid',
+    styles:{fontSize:9, cellPadding:4, fontStyle:'bold', lineColor:[180,180,180], lineWidth:0.5},
+    columnStyles:{0:{cellWidth:400}},
+    margin:{left:325},
+    didParseCell: function(data){
+      data.cell.styles.fillColor = rightFillColors[data.row.index];
+    }
+  });
+  const rightFinalY = doc.lastAutoTable.finalY;
+  return Math.max(leftFinalY, rightFinalY);
+}
+
+function drawMiniHeader(doc, p, startY){
+  doc.autoTable({
+    startY, body:[['PPD NO', p.ppd || '']], theme:'grid',
+    styles:{fontSize:9, cellPadding:4, lineColor:[180,180,180], lineWidth:0.5},
+    columnStyles:{0:{cellWidth:65, fillColor:[214,228,240], fontStyle:'bold'}, 1:{cellWidth:225}},
+    margin:{left:30}
+  });
+  return doc.lastAutoTable.finalY;
+}
+
+function drawValuesTable(doc, startY, colDefs, products){
+  const totals = {};
+  colDefs.forEach(c=>{ totals[c.key] = c.numeric===false ? '' : products.reduce((s,r)=>s+(Number(r[c.key])||0),0); });
+
+  const head = [
+    [ {content:'', colSpan:3}, {content:'Values', colSpan:colDefs.length, styles:{halign:'center', fillColor:[214,228,240], fontStyle:'bold'}} ],
+    [ 'S.no','Product Name','Unit', ...colDefs.map(c=>c.header) ]
+  ];
+  const body = products.map(pr=>[ pr.sno, `${pr.product}\n${pr.batchCode||''}`, pr.unit, ...colDefs.map(c=> c.numeric===false ? String(pr[c.key]||'') : fmt(pr[c.key])) ]);
+  const totalRowIdx = body.length;
+  body.push([ '', 'Grand Total', '', ...colDefs.map(c=> c.numeric===false ? '' : fmt(totals[c.key])) ]);
+
+  const columnStyles = { 0:{cellWidth:28}, 1:{cellWidth:150}, 2:{cellWidth:36} };
+  colDefs.forEach((c,i)=>{ columnStyles[3+i] = {cellWidth:c.width||70, halign: c.numeric===false ? 'left' : 'right'}; });
+
+  doc.autoTable({
+    startY, head, body, columnStyles,
+    styles:{fontSize:8, cellPadding:3, lineColor:[190,190,190], lineWidth:0.5, overflow:'linebreak'},
+    headStyles:{fillColor:[255,255,255], textColor:[20,20,20], lineWidth:0.5, lineColor:[150,150,150]},
+    didParseCell: function(data){
+      if(data.section==='body' && data.row.index === totalRowIdx){
+        data.cell.styles.fontStyle = 'bold';
+        data.cell.styles.fillColor = [245,245,245];
+      }
+    },
+    didDrawCell: function(data){
+      if(data.section==='body' && data.column.index===1 && data.row.index !== totalRowIdx){
+        const raw = String(data.cell.raw||'');
+        const [name, code] = raw.split('\n');
+        if(!code) return;
+        const {x,y,width,height} = data.cell;
+        doc.setFillColor(255,255,255);
+        doc.rect(x, y, width, height, 'F');
+        doc.setDrawColor(190,190,190); doc.setLineWidth(0.5);
+        doc.rect(x, y, width, height, 'S');
+        const padX = data.cell.padding('left');
+        const nameLines = doc.splitTextToSize(name, width - padX*2);
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(20,20,20);
+        doc.text(nameLines, x+padX, y+10);
+        const codeLines = doc.splitTextToSize(code, width - padX*2);
+        doc.setFont('courier','normal'); doc.setFontSize(6.5); doc.setTextColor(120,120,120);
+        doc.text(codeLines, x+padX, y+10+ nameLines.length*9 + 3);
+      }
+    },
+    margin:{left:30, right:30}
+  });
+  return doc.lastAutoTable.finalY;
+}
+
+const PDF_TABLE_A = [
+  {header:'Sum of Qty', key:'qty', width:55},
+  {header:'Sum of Basic A/m (NC)', key:'basicNC', width:85},
+  {header:'Sum of Ex Charges', key:'exCharges', width:65},
+  {header:'Sum of External Freight', key:'extFreight', width:75},
+  {header:'Sum of Internal Freight', key:'intFreight', width:75},
+  {header:'Sum of Insurance', key:'insurance', width:65},
+  {header:'Sum of Other Costs', key:'otherCosts', width:65},
+  {header:'Sum of Deductions', key:'deductions', width:65}
+];
+const PDF_TABLE_B = [
+  {header:'Sum of Qty', key:'qty', width:55},
+  {header:'Sum of Statistical Value', key:'statValue', width:85},
+  {header:'Sum of Import Duty', key:'importDuty', width:70},
+  {header:'Sum of Excise Duty', key:'exciseDuty', width:65},
+  {header:'Sum of Other Duties', key:'otherDuties', width:70},
+  {header:'Sum of CSF', key:'csf', width:55},
+  {header:'Sum of Misc Costs', key:'misc', width:65},
+  {header:'Sum of CVF', key:'cvf', width:55}
+];
+const PDF_TABLE_C = [
+  {header:'Sum of Qty', key:'qty', width:55},
+  {header:'Sum of Landing Rate', key:'landingRate', width:70},
+  {header:'Sum of Landing Cost', key:'landingCost', width:75},
+  {header:'Sum of Exempted Amount', key:'exempted', width:75},
+  {header:'Sum of Taxable Amount', key:'taxable', width:70},
+  {header:'Sum of VAT', key:'vat', width:60},
+  {header:'Sum of Department Of Customs (MOF)', key:'mof', width:95}
+];
+const PDF_TABLE_D = [
+  {header:'Sum of Qty', key:'qty', width:50},
+  {header:'Sum of Landing Cost (Stg 1)', key:'landingCost', width:85},
+  {header:'Sum of Agent Chg (alloc)', key:'agentAlloc', width:75},
+  {header:'Sum of Labour (alloc)', key:'labourAlloc', width:70},
+  {header:'Sum of Other Import (alloc)', key:'otherImportAlloc', width:80},
+  {header:'Sum of Landing Cost (Stg 2)', key:'stage2LandingCost', width:90},
+  {header:'Sum of Rate (Stg 2)', key:'stage2Rate', width:70}
+];
+
+function buildPpdPdf(doc, rawP, startY){
+  const p = computePpd(rawP);
+  let y = drawInfoHeader(doc, p, startY) + 15;
+  y = drawValuesTable(doc, y, PDF_TABLE_A, p.products) + 20;
+  y = drawMiniHeader(doc, p, y) + 15;
+  y = drawValuesTable(doc, y, PDF_TABLE_B, p.products) + 20;
+  y = drawMiniHeader(doc, p, y) + 15;
+  y = drawValuesTable(doc, y, PDF_TABLE_C, p.products) + 20;
+  y = drawMiniHeader(doc, p, y) + 15;
+  y = drawValuesTable(doc, y, PDF_TABLE_D, p.products) + 15;
+  return y;
+}
+
+function exportPpdPdf(ppdId){
+  const rawP = ppds.find(x=>x.id===ppdId);
+  if(!rawP) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'landscape', unit:'pt', format:'a4' });
+  buildPpdPdf(doc, rawP, 30);
+  doc.save(`PPD_${(rawP.ppd||rawP.id)}.pdf`);
+}
+
+function exportAllPdf(){
+  if(ppds.length===0){ showImportStatus('No Pragyapan Patra to export.', true); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'landscape', unit:'pt', format:'a4' });
+  ppds.forEach((rawP, i)=>{
+    if(i>0) doc.addPage();
+    buildPpdPdf(doc, rawP, 30);
+  });
+  doc.save('Landing_cost_all_PPDs.pdf');
+}
+
+/* ============================================================
+   TAB NAVIGATION
+   ============================================================ */
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='records') renderRecords();
+  if(tab==='analysis') renderAnalysis();
+}
+
+/* ============================================================
+   MODAL HELPERS
+   ============================================================ */
+function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
+function openModal(html){ document.getElementById('modalRoot').innerHTML = `<div class="modal-overlay" onclick="if(event.target===this) closeModal()"><div class="modal">${html}</div></div>`; }
+
+/* ============================================================
+   SAVED PPDs LOG  (Records tab)
+   ============================================================ */
+let recSearch = '';
+let recSort = { field:'date', dir:'desc' };
+
+function onRecSearch(v){ recSearch = v; renderRecords(); }
+
+function getPpdLevelRecords(computedPpds){
+  return computedPpds.map(p=>{
+    const totalTaxable = p.products.reduce((s,pr)=>s+pr.taxable,0);
+    const totalExempted = p.products.reduce((s,pr)=>s+pr.exempted,0);
+    const totalVat = p.products.reduce((s,pr)=>s+pr.vat,0);
+    const totalLandingCost = p.products.reduce((s,pr)=>s+pr.landingCost,0);
+    const totalMof = p.products.reduce((s,pr)=>s+pr.mof,0);
+    const totalStage2Landing = p.products.reduce((s,pr)=>s+pr.stage2LandingCost,0);
+    return {
+      id:p.id, company:p.company, date:p.date, ppd:p.ppd, party:p.party,
+      branchName:p.branchName, transportName:p.transportName, insuranceName:p.insuranceName,
+      csf:p.csf, cvf:p.cvf, misc:p.misc, agentCharges:p.agentCharges, labourCharges:p.labourCharges,
+      otherImportCharges:p.otherImportCharges, status:p.status||'draft', productCount:p.products.length,
+      totalQty:p.totalQty, totalBasicNC:p.totalBasicNC, totalTaxable, totalExempted, totalVat,
+      totalLandingCost, totalMof, totalStage2Landing
+    };
+  });
+}
+
+function renderRecords(){
+  const wrap = document.getElementById('recTableWrap');
+  if(!wrap) return;
+  let recs = getPpdLevelRecords(lastComputedPpds).filter(r=>r.status==='saved');
+
+  if(recSearch.trim()){
+    const q = recSearch.trim().toLowerCase();
+    recs = recs.filter(r => [r.company,r.party,r.ppd,r.branchName]
+      .some(v=>String(v||'').toLowerCase().includes(q)));
+  }
+
+  recs.sort((a,b)=>{
+    const f = recSort.field;
+    let av = a[f], bv = b[f];
+    if(typeof av==='string'){ av=av.toLowerCase(); bv=String(bv||'').toLowerCase(); }
+    if(av<bv) return recSort.dir==='asc' ? -1 : 1;
+    if(av>bv) return recSort.dir==='asc' ? 1 : -1;
+    return 0;
+  });
+
+  document.getElementById('recCount').textContent = `${recs.length} saved PPD(s)`;
+
+  if(recs.length===0){
+    wrap.innerHTML = `<div class="empty">No saved Pragyapan Patra yet. Click "Save PPD" on a worksheet card to move it here.</div>`;
+    return;
+  }
+
+  const cols = [
+    {key:'company', label:'Company'}, {key:'date', label:'Date'}, {key:'ppd', label:'PPD No'},
+    {key:'party', label:'Party'}, {key:'branchName', label:'Branch'},
+    {key:'productCount', label:'Total Products'}, {key:'totalMof', label:'Department of Customs'}
+  ];
+  const arrow = f => recSort.field===f ? `<span class="arrow">${recSort.dir==='asc'?'&uarr;':'&darr;'}</span>` : '';
+
+  wrap.innerHTML = `
+    <div class="rec-table-wrap">
+    <table class="rec-table">
+      <thead><tr>
+        ${cols.map(c=>`<th class="${c.key==='company'||c.key==='party'||c.key==='branchName'?'left':''}" onclick="setRecSort('${c.key}')">${c.label}${arrow(c.key)}</th>`).join('')}
+        <th></th>
+      </tr></thead>
+      <tbody>
+        ${recs.map(r=>`
+          <tr>
+            <td class="left">${r.company||'&mdash;'}</td>
+            <td>${r.date||'&mdash;'}</td>
+            <td>${r.ppd||'&mdash;'}</td>
+            <td class="left">${r.party||'&mdash;'}</td>
+            <td class="left">${r.branchName||'&mdash;'}</td>
+            <td>${r.productCount}</td>
+            <td>${fmt(r.totalMof)}</td>
+            <td>
+              <div class="rec-actions">
+                <button class="tiny view" onclick="viewPpdModal('${r.id}')">View</button>
+                <button class="tiny edit" onclick="editSavedPpd('${r.id}')">Edit</button>
+                <button class="tiny del" onclick="deletePpdConfirm('${r.id}')">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    </div>
+  `;
+}
+
+function setRecSort(field){
+  if(recSort.field===field){ recSort.dir = recSort.dir==='asc' ? 'desc' : 'asc'; }
+  else { recSort = { field, dir:'asc' }; }
+  renderRecords();
+}
+
+function deletePpdConfirm(id){
+  const p = ppds.find(x=>x.id===id);
+  if(!p) return;
+  if(confirm(`Delete PPD "${p.ppd||'(no PPD no)'}" for ${p.company||'(no company)'}? This cannot be undone.`)){
+    deletePpd(id);
+  }
+}
+
+/* Save PPD (worksheet -> Saved PPDs) */
+async function savePpdToSavedList(id){
+  const p = ppds.find(x=>x.id===id);
+  if(!p) return;
+  p.status = 'saved';
+  const ok = await saveHeadToSupabase(p);
+  render();
+  switchTab('records');
+  showImportStatus(ok ? 'PPD saved.' : 'PPD saved locally — check connection, some changes may not have synced.', !ok);
+}
+
+/* Edit (Saved PPDs -> back to worksheet as a draft) */
+async function editSavedPpd(id){
+  const p = ppds.find(x=>x.id===id);
+  if(!p) return;
+  p.status = 'draft';
+  await saveHeadToSupabase(p);
+  render();
+  switchTab('worksheet');
+  setTimeout(()=>{
+    const el = document.getElementById('ppd-card-'+id);
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 60);
+}
+
+function viewPpdModal(id){
+  const p = lastComputedPpds.find(x=>x.id===id);
+  if(!p) return;
+  const fields = [
+    ['Company', p.company], ['Date', p.date], ['PPD No', p.ppd], ['Party', p.party],
+    ['Branch', p.branchName], ['Transport', p.transportName], ['Insurance', p.insuranceName],
+    ['CSF', fmt(p.csf)], ['CVF', fmt(p.cvf)], ['Misc Costs', fmt(p.misc)],
+    ['Agent Charges', fmt(p.agentCharges)], ['Labour Charges', fmt(p.labourCharges)], ['Other Import Charges', fmt(p.otherImportCharges)]
+  ];
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <h3>${p.company||'PPD'} &mdash; ${p.ppd||''}</h3>
+    <div class="modal-grid">
+      ${fields.map(([l,v])=>`<div class="modal-field"><label>${l}</label><div class="ro">${v||'&mdash;'}</div></div>`).join('')}
+    </div>
+    <div class="an-sec-label" style="margin-top:1rem;">Products</div>
+    <div class="h-scroll">
+    <table>
+      <thead><tr>
+        <th>#</th><th class="left">Product</th><th class="left">Unit</th><th>Qty</th><th>Basic (IC)</th>
+        <th>Taxable</th><th>Exempted</th><th>VAT</th><th>Landing (Stg1)</th><th>Landing (Stg2)</th>
+      </tr></thead>
+      <tbody>
+        ${p.products.map(pr=>`
+          <tr class="${pr.exempt?'exempt-row':''}">
+            <td class="left">${pr.sno}</td><td class="left">${pr.product||'&mdash;'}</td><td class="left">${pr.unit||'&mdash;'}</td>
+            <td>${fmt(pr.qty)}</td><td>${fmt(pr.basicIC)}</td><td>${fmt(pr.taxable)}</td>
+            <td>${fmt(pr.exempted)}</td><td>${fmt(pr.vat)}</td><td>${fmt(pr.landingCost)}</td><td>${fmt(pr.stage2LandingCost)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    </div>
+    <div class="modal-actions"><button onclick="closeModal()">Close</button></div>
+  `);
+}
+
+/* ============================================================
+   DATA ANALYSIS  (grouping / sorting / filtering / searching / pivoting)
+   ============================================================ */
+const FIELD_DEFS = {
+  ppd: [
+    {key:'company',label:'Company',type:'string'}, {key:'date',label:'Date',type:'string'},
+    {key:'ppd',label:'PPD No',type:'string'}, {key:'party',label:'Party',type:'string'},
+    {key:'branchName',label:'Branch',type:'string'}, {key:'transportName',label:'Transport',type:'string'},
+    {key:'insuranceName',label:'Insurance',type:'string'}, {key:'productCount',label:'Product Count',type:'number'},
+    {key:'totalQty',label:'Total Qty',type:'number'}, {key:'totalBasicNC',label:'Total Basic (NC)',type:'number'},
+    {key:'csf',label:'CSF',type:'number'}, {key:'cvf',label:'CVF',type:'number'}, {key:'misc',label:'Misc Costs',type:'number'},
+    {key:'agentCharges',label:'Agent Charges',type:'number'}, {key:'labourCharges',label:'Labour Charges',type:'number'},
+    {key:'otherImportCharges',label:'Other Import Charges',type:'number'}, {key:'totalTaxable',label:'Total Taxable',type:'number'},
+    {key:'totalExempted',label:'Total Exempted',type:'number'}, {key:'totalVat',label:'Total VAT',type:'number'},
+    {key:'totalLandingCost',label:'Total Landing Cost (Stg1)',type:'number'}, {key:'totalMof',label:'Total to Dept of Customs',type:'number'},
+    {key:'totalStage2Landing',label:'Total Landing Cost (Stg2)',type:'number'}
+  ],
+  product: [
+    {key:'company',label:'Company',type:'string'}, {key:'date',label:'Date',type:'string'},
+    {key:'ppd',label:'PPD No',type:'string'}, {key:'party',label:'Party',type:'string'},
+    {key:'branchName',label:'Branch',type:'string'}, {key:'transportName',label:'Transport',type:'string'},
+    {key:'insuranceName',label:'Insurance',type:'string'}, {key:'product',label:'Product',type:'string'},
+    {key:'unit',label:'Unit',type:'string'}, {key:'exempt',label:'Exempt',type:'string'},
+    {key:'sno',label:'S.No',type:'number'}, {key:'qty',label:'Qty',type:'number'},
+    {key:'basicIC',label:'Basic (IC)',type:'number'}, {key:'basicNC',label:'Basic (NC)',type:'number'},
+    {key:'exCharges',label:'Ex Charges',type:'number'}, {key:'extFreight',label:'Ext Freight',type:'number'},
+    {key:'intFreight',label:'Int Freight',type:'number'}, {key:'insurance',label:'Insurance',type:'number'},
+    {key:'otherCosts',label:'Other Costs',type:'number'}, {key:'deductions',label:'Deductions',type:'number'},
+    {key:'statValue',label:'Statistical Value',type:'number'}, {key:'importDuty',label:'Import Duty',type:'number'},
+    {key:'exciseDuty',label:'Excise Duty',type:'number'}, {key:'otherDuties',label:'Other Duties',type:'number'},
+    {key:'csfAlloc',label:'CSF (Alloc)',type:'number'}, {key:'cvfAlloc',label:'CVF (Alloc)',type:'number'},
+    {key:'miscAlloc',label:'Misc (Alloc)',type:'number'}, {key:'taxable',label:'Taxable',type:'number'},
+    {key:'exempted',label:'Exempted',type:'number'}, {key:'vat',label:'VAT',type:'number'},
+    {key:'landingCost',label:'Landing Cost (Stg1)',type:'number'}, {key:'landingRate',label:'Landing Rate (Stg1)',type:'number'},
+    {key:'mof',label:'Dept of Customs',type:'number'}, {key:'agentAlloc',label:'Agent (Alloc)',type:'number'},
+    {key:'labourAlloc',label:'Labour (Alloc)',type:'number'}, {key:'otherImportAlloc',label:'Other Import (Alloc)',type:'number'},
+    {key:'stage2LandingCost',label:'Landing Cost (Stg2)',type:'number'}, {key:'stage2Rate',label:'Rate (Stg2)',type:'number'},
+    {key:'batchCode',label:'Batch Code',type:'string'}
+  ]
+};
+
+function getProductLevelRecords(computedPpds){
+  const out = [];
+  computedPpds.forEach(p=>{
+    p.products.forEach(pr=>{
+      out.push({
+        ppdId:p.id, company:p.company, date:p.date, ppd:p.ppd, party:p.party,
+        branchName:p.branchName, transportName:p.transportName, insuranceName:p.insuranceName,
+        product:pr.product, unit:pr.unit, exempt: pr.exempt ? 'Yes':'No', sno:pr.sno, qty:pr.qty,
+        basicIC:pr.basicIC, basicNC:pr.basicNC, exCharges:pr.exCharges, extFreight:pr.extFreight,
+        intFreight:pr.intFreight, insurance:pr.insurance, otherCosts:pr.otherCosts, deductions:pr.deductions,
+        statValue:pr.statValue, importDuty:pr.importDuty, exciseDuty:pr.exciseDuty, otherDuties:pr.otherDuties,
+        csfAlloc:pr.csf, cvfAlloc:pr.cvf, miscAlloc:pr.misc, taxable:pr.taxable, exempted:pr.exempted, vat:pr.vat,
+        landingCost:pr.landingCost, landingRate:pr.landingRate, mof:pr.mof, agentAlloc:pr.agentAlloc,
+        labourAlloc:pr.labourAlloc, otherImportAlloc:pr.otherImportAlloc, stage2LandingCost:pr.stage2LandingCost,
+        stage2Rate:pr.stage2Rate, batchCode:pr.batchCode
+      });
+    });
+  });
+  return out;
+}
+
+let analysisState = {
+  level: 'product',
+  search: '',
+  groupBy: [],
+  columns: {},
+  sortField: null,
+  sortDir: 'asc'
+};
+let savedViews = [];
+
+function currentDefs(){ return FIELD_DEFS[analysisState.level]; }
+function fieldLabel(key){ const d = currentDefs().find(f=>f.key===key); return d ? d.label : key; }
+
+function ensureColumnsState(){
+  currentDefs().forEach(d=>{
+    if(!analysisState.columns[d.key]){
+      analysisState.columns[d.key] = { visible:true, filter:null, agg: d.type==='number' ? 'sum' : null };
+    }
+  });
+}
+
+function valOf(r,key){ const v = r[key]; return (v===undefined||v===null||v==='') ? '(blank)' : String(v); }
+
+function onAnLevelChange(v){
+  analysisState.level = v;
+  analysisState.groupBy = [];
+  analysisState.columns = {};
+  analysisState.sortField = null; analysisState.sortDir = 'asc';
+  analysisState.search = '';
+  closePopover(); closeColumnsPanel();
+  renderAnalysis();
+}
+function onAnSearch(v){ analysisState.search = v; renderAnalysisResults(); }
+
+function resetAnalysis(){
+  analysisState = { level: analysisState.level, search:'', groupBy:[], columns:{}, sortField:null, sortDir:'asc' };
+  closePopover(); closeColumnsPanel();
+  renderAnalysis();
+}
+
+/* ---------- column visibility ---------- */
+function toggleColVisible(key, visible){
+  analysisState.columns[key].visible = visible;
+  renderAnalysis();
+}
+function hideColumn(key){
+  analysisState.columns[key].visible = false;
+  closePopover();
+  renderAnalysis();
+}
+function setAllColumnsVisible(v){
+  currentDefs().forEach(d=>analysisState.columns[d.key].visible = v);
+  closeColumnsPanel();
+  renderAnalysis();
+}
+function closeColumnsPanel(){
+  const el = document.getElementById('anColumnsPanel');
+  if(el) el.remove();
+  document.removeEventListener('click', outsideColumnsPanelClick, true);
+}
+function outsideColumnsPanelClick(e){
+  const panel = document.getElementById('anColumnsPanel');
+  if(panel && !panel.contains(e.target) && e.target.id!=='anColumnsBtn') closeColumnsPanel();
+}
+function toggleColumnsPanel(){
+  if(document.getElementById('anColumnsPanel')){ closeColumnsPanel(); return; }
+  closePopover();
+  ensureColumnsState();
+  const defs = currentDefs();
+  const btn = document.getElementById('anColumnsBtn');
+  const rect = btn.getBoundingClientRect();
+  const panel = document.createElement('div');
+  panel.id = 'anColumnsPanel';
+  panel.className = 'an-columns-panel';
+  panel.innerHTML = `<h4>Show / hide columns</h4>
+    <div style="margin-bottom:.4rem;"><button class="tiny" onclick="setAllColumnsVisible(true)">Show all</button> <button class="tiny ghost" onclick="setAllColumnsVisible(false)">Hide all</button></div>
+    ${defs.map(d=>`<label class="val-row"><input type="checkbox" ${analysisState.columns[d.key].visible?'checked':''} onchange="toggleColVisible('${d.key}',this.checked)"> ${d.label}</label>`).join('')}`;
+  document.body.appendChild(panel);
+  panel.style.top = (rect.bottom+6)+'px';
+  panel.style.left = Math.min(rect.left, window.innerWidth-250)+'px';
+  setTimeout(()=>document.addEventListener('click', outsideColumnsPanelClick, true), 0);
+}
+
+/* ---------- grouping / sorting / aggregation ---------- */
+function toggleGroupBy(key){
+  const idx = analysisState.groupBy.indexOf(key);
+  if(idx===-1) analysisState.groupBy.push(key); else analysisState.groupBy.splice(idx,1);
+  renderAnalysis();
+}
+function removeGroupBy(key){ analysisState.groupBy = analysisState.groupBy.filter(k=>k!==key); renderAnalysis(); }
+function setColAgg(key, agg){ analysisState.columns[key].agg = agg; renderAnalysisResults(); }
+function setSort(key, dir){ analysisState.sortField = key; analysisState.sortDir = dir; closePopover(); renderAnalysisResults(); }
+function clearSort(){ analysisState.sortField = null; closePopover(); renderAnalysisResults(); }
+
+/* ---------- per-column filters ---------- */
+function setNumberFilter(key, min, max){
+  const hasMin = min!=='' && min!=null, hasMax = max!=='' && max!=null;
+  analysisState.columns[key].filter = (hasMin||hasMax) ? {type:'range', min: hasMin?Number(min):null, max: hasMax?Number(max):null} : null;
+  closePopover();
+  renderAnalysis();
+}
+function setStringFilter(key, included){
+  analysisState.columns[key].filter = included===null ? null : {type:'values', included};
+  closePopover();
+  renderAnalysis();
+}
+function removeColumnFilter(key){ analysisState.columns[key].filter = null; closePopover(); renderAnalysis(); }
+
+function applyAnalysisFilters(records, defs){
+  let out = records;
+  if(analysisState.search.trim()){
+    const q = analysisState.search.trim().toLowerCase();
+    out = out.filter(r => defs.some(d => d.type==='string' && String(r[d.key]||'').toLowerCase().includes(q)));
+  }
+  defs.forEach(d=>{
+    const col = analysisState.columns[d.key];
+    if(!col || !col.filter) return;
+    if(col.filter.type==='range'){
+      out = out.filter(r=>{
+        const num = Number(r[d.key])||0;
+        if(col.filter.min!=null && num < col.filter.min) return false;
+        if(col.filter.max!=null && num > col.filter.max) return false;
+        return true;
+      });
+    } else if(col.filter.type==='values'){
+      const set = new Set(col.filter.included);
+      out = out.filter(r => set.has(valOf(r, d.key)));
+    }
+  });
+  return out;
+}
+
+function aggregateRecords(records, valueFields){
+  return valueFields.map(vf=>{
+    const nums = records.map(r=>Number(r[vf.field])||0);
+    let value;
+    switch(vf.agg){
+      case 'sum': value = nums.reduce((s,n)=>s+n,0); break;
+      case 'avg': value = nums.length ? nums.reduce((s,n)=>s+n,0)/nums.length : 0; break;
+      case 'count': value = records.length; break;
+      case 'min': value = nums.length ? Math.min(...nums) : 0; break;
+      case 'max': value = nums.length ? Math.max(...nums) : 0; break;
+      default: value = 0;
+    }
+    return { field:vf.field, agg:vf.agg, value };
+  });
+}
+
+/* ---------- column header popover ---------- */
+function closePopover(){
+  const el = document.getElementById('anPopover');
+  if(el) el.remove();
+  document.removeEventListener('click', outsidePopoverClick, true);
+}
+function outsidePopoverClick(e){
+  const pop = document.getElementById('anPopover');
+  if(pop && !pop.contains(e.target) && !e.target.closest('.an-th-btn')) closePopover();
+}
+function filterPopoverValueList(q){
+  q = q.toLowerCase();
+  document.querySelectorAll('#anValueList .pv-item').forEach(el=>{
+    el.style.display = el.dataset.val.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+function checkAllPopoverValues(check){
+  document.querySelectorAll('#anValueList .pv-check').forEach(c=>c.checked = check);
+}
+function applyStringFilterFromPopover(key, total){
+  const checks = Array.from(document.querySelectorAll('#anValueList .pv-check'));
+  const checked = checks.filter(c=>c.checked).map(c=>c.value);
+  setStringFilter(key, checked.length===total ? null : checked);
+}
+function applyNumberFilterFromPopover(key){
+  const min = document.getElementById('anFilterMin').value;
+  const max = document.getElementById('anFilterMax').value;
+  setNumberFilter(key, min, max);
+}
+
+function openColumnPopover(key, btnEl){
+  closeColumnsPanel();
+  const existing = document.getElementById('anPopover');
+  const wasOpenForKey = existing && existing.dataset.key===key;
+  closePopover();
+  if(wasOpenForKey) return;
+
+  const def = currentDefs().find(d=>d.key===key);
+  const col = analysisState.columns[key];
+  const rect = btnEl.getBoundingClientRect();
+  const pop = document.createElement('div');
+  pop.className = 'an-popover';
+  pop.id = 'anPopover';
+  pop.dataset.key = key;
+
+  let html = `<h4>${def.label}</h4>`;
+  if(def.type==='number'){
+    html += `<button class="tiny full" onclick="setSort('${key}','asc')">Sort smallest &rarr; largest</button>`;
+    html += `<button class="tiny full" onclick="setSort('${key}','desc')">Sort largest &rarr; smallest</button>`;
+  } else {
+    html += `<button class="tiny full" onclick="setSort('${key}','asc')">Sort A &rarr; Z</button>`;
+    html += `<button class="tiny full" onclick="setSort('${key}','desc')">Sort Z &rarr; A</button>`;
+  }
+  if(analysisState.sortField===key) html += `<button class="tiny ghost full" onclick="clearSort()">Clear sort</button>`;
+
+  html += `<div class="an-divider"></div>`;
+  html += `<label class="val-row"><input type="checkbox" ${analysisState.groupBy.includes(key)?'checked':''} onchange="toggleGroupBy('${key}')"> Group by this column</label>`;
+  if(def.type==='number'){
+    html += `<label style="display:block; margin-top:5px; font-size:9.5px; text-transform:uppercase; color:var(--ink-soft);">Aggregation (used when grouped, and in the grand-total row)</label>
+      <select onchange="setColAgg('${key}',this.value)">
+        ${['sum','avg','count','min','max'].map(a=>`<option value="${a}" ${col.agg===a?'selected':''}>${a}</option>`).join('')}
+      </select>`;
+  }
+
+  html += `<div class="an-divider"></div><h4>Filter</h4>`;
+  if(def.type==='number'){
+    const f = col.filter && col.filter.type==='range' ? col.filter : {min:'',max:''};
+    html += `<input type="number" id="anFilterMin" placeholder="Min" value="${f.min??''}">
+             <input type="number" id="anFilterMax" placeholder="Max" value="${f.max??''}">
+             <button class="tiny full" onclick="applyNumberFilterFromPopover('${key}')">Apply filter</button>`;
+  } else {
+    const allRecs = getAnalysisRecords();
+    const uniq = Array.from(new Set(allRecs.map(r=>valOf(r,key)))).sort();
+    const included = col.filter && col.filter.type==='values' ? new Set(col.filter.included) : null;
+    html += `<input type="text" placeholder="Search values…" oninput="filterPopoverValueList(this.value)">
+      <div style="margin:.3rem 0;"><button class="tiny" onclick="checkAllPopoverValues(true)">All</button> <button class="tiny ghost" onclick="checkAllPopoverValues(false)">None</button></div>
+      <div id="anValueList">
+        ${uniq.map(v=>{
+          const esc = v.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+          return `<label class="val-row pv-item" data-val="${esc}"><input type="checkbox" class="pv-check" value="${esc}" ${(!included || included.has(v))?'checked':''}> ${v}</label>`;
+        }).join('')}
+      </div>
+      <button class="tiny full" style="margin-top:5px;" onclick="applyStringFilterFromPopover('${key}', ${uniq.length})">Apply filter</button>`;
+  }
+  if(col.filter) html += `<button class="tiny ghost full" onclick="removeColumnFilter('${key}')">Clear filter</button>`;
+
+  html += `<div class="an-divider"></div><button class="tiny ghost full" onclick="hideColumn('${key}')">Hide this column</button>`;
+
+  pop.innerHTML = html;
+  document.body.appendChild(pop);
+  const top = Math.min(rect.bottom+6, window.innerHeight-430);
+  const left = Math.min(rect.left, window.innerWidth-250);
+  pop.style.top = Math.max(8,top)+'px';
+  pop.style.left = Math.max(8,left)+'px';
+  setTimeout(()=>document.addEventListener('click', outsidePopoverClick, true), 0);
+}
+
+/* ---------- top-level render ---------- */
+function renderAnalysis(){
+  ensureColumnsState();
+  document.getElementById('anLevel').value = analysisState.level;
+  document.getElementById('anSearch').value = analysisState.search;
+
+  document.getElementById('anGroupChips').innerHTML = analysisState.groupBy.length
+    ? analysisState.groupBy.map(k=>`<div class="an-chip">Group: ${fieldLabel(k)} <button onclick="removeGroupBy('${k}')">&times;</button></div>`).join('')
+    : `<span class="rec-count">No grouping — click a column header's ⋮ menu to group by it.</span>`;
+
+  const activeFilters = currentDefs().filter(d=>analysisState.columns[d.key] && analysisState.columns[d.key].filter);
+  document.getElementById('anFilterChips').innerHTML = activeFilters.length
+    ? activeFilters.map(d=>`<div class="an-chip">${d.label} filtered <button onclick="removeColumnFilter('${d.key}')">&times;</button></div>`).join('')
+    : `<span class="rec-count">No column filters applied.</span>`;
+
+  const viewSel = document.getElementById('anViewSelect');
+  viewSel.innerHTML = `<option value="">Load a saved view…</option>` + savedViews.map((v,i)=>`<option value="${i}">${v.name}</option>`).join('');
+
+  renderAnalysisResults();
+}
+
+function getAnalysisRecords(){
+  return analysisState.level==='product' ? getProductLevelRecords(lastComputedPpds) : getPpdLevelRecords(lastComputedPpds);
+}
+
+function thCell(d){
+  const isSorted = analysisState.sortField===d.key;
+  const arrow = isSorted ? (analysisState.sortDir==='asc' ? ' &uarr;' : ' &darr;') : '';
+  const isGrouped = analysisState.groupBy.includes(d.key);
+  const isFiltered = !!(analysisState.columns[d.key] && analysisState.columns[d.key].filter);
+  return `<th class="an-th ${d.type!=='number'?'left':''}">
+    <div class="an-th-inner">
+      <span>${d.label}${arrow}${isGrouped?' <span class="col-badge" title="Grouped">⛁</span>':''}${isFiltered?' <span class="col-badge" title="Filtered">⏷</span>':''}</span>
+      <button class="an-th-btn" onclick="event.stopPropagation(); openColumnPopover('${d.key}', this)">⋮</button>
+    </div>
+  </th>`;
+}
+
+function renderAnalysisResults(){
+  const resultWrap = document.getElementById('anResultWrap');
+  const countEl = document.getElementById('anCount');
+  if(!resultWrap) return;
+  ensureColumnsState();
+  const defs = currentDefs();
+  const visibleDefs = defs.filter(d=>analysisState.columns[d.key].visible);
+  let records = applyAnalysisFilters(getAnalysisRecords(), defs);
+  countEl.textContent = `${records.length} row(s) after filters`;
+
+  if(records.length===0){
+    resultWrap.innerHTML = `<div class="empty">No data matches these filters.</div>`;
+    return;
+  }
+  if(visibleDefs.length===0){
+    resultWrap.innerHTML = `<div class="empty">All columns are hidden. Use the "Columns" button to show some.</div>`;
+    return;
+  }
+
+  const groupKeys = analysisState.groupBy.filter(k=>visibleDefs.some(d=>d.key===k));
+
+  if(groupKeys.length===0){
+    let recs = records.slice();
+    if(analysisState.sortField && visibleDefs.some(d=>d.key===analysisState.sortField)){
+      const sf = analysisState.sortField;
+      recs.sort((a,b)=>{
+        let av=a[sf], bv=b[sf];
+        if(typeof av==='string' || typeof bv==='string'){ av=String(av||'').toLowerCase(); bv=String(bv||'').toLowerCase(); }
+        if(av<bv) return analysisState.sortDir==='asc'?-1:1;
+        if(av>bv) return analysisState.sortDir==='asc'?1:-1;
+        return 0;
+      });
+    }
+    const capped = recs.slice(0,1000);
+    const numDefs = visibleDefs.filter(d=>d.type==='number');
+    const totals = aggregateRecords(recs, numDefs.map(d=>({field:d.key, agg: analysisState.columns[d.key].agg||'sum'})));
+    resultWrap.innerHTML = `
+      ${recs.length>1000 ? `<p class="mini-note">Showing first 1000 of ${recs.length} rows. Add filters or grouping to narrow this down.</p>` : ''}
+      <table class="rec-table">
+        <thead><tr>${visibleDefs.map(thCell).join('')}</tr></thead>
+        <tbody>
+          ${capped.map(r=>`<tr>${visibleDefs.map(d=>`<td class="${d.type!=='number'?'left':''}">${d.type==='number'?fmt(r[d.key]):(r[d.key]||'&mdash;')}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+        <tfoot><tr class="grandtotal-row">${visibleDefs.map((d,i)=>{
+          if(d.type!=='number') return `<td class="left">${i===0?`Grand total (${recs.length} rows)`:''}</td>`;
+          const t = totals.find(x=>x.field===d.key);
+          return `<td>${t?fmt(t.value):''}</td>`;
+        }).join('')}</tr></tfoot>
+      </table>
+    `;
+    return;
+  }
+
+  // Grouped / pivoted view
+  function buildTree(recs, depth){
+    if(depth>=groupKeys.length) return recs;
+    const key = groupKeys[depth];
+    const map = {};
+    recs.forEach(r=>{
+      const gv = valOf(r,key);
+      (map[gv] = map[gv] || []).push(r);
+    });
+    const result = {};
+    Object.keys(map).sort().forEach(gv=>{ result[gv] = buildTree(map[gv], depth+1); });
+    return result;
+  }
+  const tree = buildTree(records, 0);
+  const numDefs = visibleDefs.filter(d=>d.type==='number' && !groupKeys.includes(d.key));
+  const valueFieldsCfg = numDefs.map(d=>({field:d.key, agg: analysisState.columns[d.key].agg||'sum'}));
+  const nonGroupStringCols = Math.max(1, visibleDefs.filter(d=>d.type!=='number' && !groupKeys.includes(d.key)).length);
+
+  function flattenGroup(node){ return Array.isArray(node) ? node : Object.values(node).flatMap(flattenGroup); }
+  let rowsHtml = '';
+  function walk(node, depth){
+    if(Array.isArray(node)) return;
+    Object.keys(node).forEach(gv=>{
+      const groupRecords = flattenGroup(node[gv]);
+      const agg = aggregateRecords(groupRecords, valueFieldsCfg);
+      rowsHtml += `<tr class="group-head lvl${depth+1}"><td colspan="${nonGroupStringCols}" style="padding-left:${depth*16+8}px;">${fieldLabel(groupKeys[depth])}: ${gv} <span style="opacity:.7; font-weight:400;">(${groupRecords.length})</span></td>${valueFieldsCfg.map(vf=>{
+        const a = agg.find(x=>x.field===vf.field && x.agg===vf.agg);
+        return `<td>${a?fmt(a.value):''}</td>`;
+      }).join('')}</tr>`;
+      walk(node[gv], depth+1);
+    });
+  }
+  walk(tree, 0);
+  const grand = aggregateRecords(records, valueFieldsCfg);
+
+  resultWrap.innerHTML = `
+    <table class="rec-table">
+      <thead><tr><th class="left" colspan="${nonGroupStringCols}">Group (${groupKeys.map(fieldLabel).join(' &rarr; ')})</th>${numDefs.map(d=>`<th>${d.label} (${analysisState.columns[d.key].agg})</th>`).join('')}</tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr class="grandtotal-row"><td class="left" colspan="${nonGroupStringCols}">Grand total (${records.length} rows)</td>${valueFieldsCfg.map(vf=>{
+        const a = grand.find(x=>x.field===vf.field && x.agg===vf.agg);
+        return `<td>${a?fmt(a.value):''}</td>`;
+      }).join('')}</tr></tfoot>
+    </table>
+  `;
+}
+
+/* ---------- Export the current analysis view (filters/sort/grouping/hidden columns) to Excel ---------- */
+function downloadAnalysisViewExcel(){
+  ensureColumnsState();
+  const defs = currentDefs();
+  const visibleDefs = defs.filter(d=>analysisState.columns[d.key].visible);
+  if(visibleDefs.length===0){ showImportStatus('All columns are hidden — show at least one column before downloading.', true); return; }
+
+  const records = applyAnalysisFilters(getAnalysisRecords(), defs);
+  if(records.length===0){ showImportStatus('No rows match the current view — nothing to download.', true); return; }
+
+  const groupKeys = analysisState.groupBy.filter(k=>visibleDefs.some(d=>d.key===k));
+  let aoa;
+
+  if(groupKeys.length===0){
+    let recs = records.slice();
+    if(analysisState.sortField && visibleDefs.some(d=>d.key===analysisState.sortField)){
+      const sf = analysisState.sortField;
+      recs.sort((a,b)=>{
+        let av=a[sf], bv=b[sf];
+        if(typeof av==='string' || typeof bv==='string'){ av=String(av||'').toLowerCase(); bv=String(bv||'').toLowerCase(); }
+        if(av<bv) return analysisState.sortDir==='asc'?-1:1;
+        if(av>bv) return analysisState.sortDir==='asc'?1:-1;
+        return 0;
+      });
+    }
+    const headers = visibleDefs.map(d=>d.label);
+    const rows = recs.map(r=>visibleDefs.map(d=> d.type==='number' ? round2(Number(r[d.key])||0) : String(r[d.key] ?? '')));
+    const numDefs = visibleDefs.filter(d=>d.type==='number');
+    const totals = aggregateRecords(recs, numDefs.map(d=>({field:d.key, agg: analysisState.columns[d.key].agg||'sum'})));
+    const totalsRow = visibleDefs.map((d,i)=>{
+      if(d.type!=='number') return i===0 ? `Grand total (${recs.length} rows)` : '';
+      const t = totals.find(x=>x.field===d.key);
+      return t ? round2(t.value) : '';
+    });
+    aoa = [headers, ...rows, totalsRow];
+  } else {
+    function buildTree(recs, depth){
+      if(depth>=groupKeys.length) return recs;
+      const key = groupKeys[depth];
+      const map = {};
+      recs.forEach(r=>{
+        const gv = valOf(r,key);
+        (map[gv]=map[gv]||[]).push(r);
+      });
+      const result = {};
+      Object.keys(map).sort().forEach(gv=>{ result[gv]=buildTree(map[gv],depth+1); });
+      return result;
+    }
+    const tree = buildTree(records, 0);
+    const numDefs = visibleDefs.filter(d=>d.type==='number' && !groupKeys.includes(d.key));
+    const valueFieldsCfg = numDefs.map(d=>({field:d.key, agg: analysisState.columns[d.key].agg||'sum'}));
+    const headers = [...groupKeys.map(fieldLabel), 'Row count', ...numDefs.map(d=>`${d.label} (${analysisState.columns[d.key].agg})`)];
+
+    function flattenGroup(node){ return Array.isArray(node) ? node : Object.values(node).flatMap(flattenGroup); }
+    const rows = [];
+    function walk(node, depth, path){
+      if(Array.isArray(node)) return;
+      Object.keys(node).forEach(gv=>{
+        const groupRecords = flattenGroup(node[gv]);
+        const agg = aggregateRecords(groupRecords, valueFieldsCfg);
+        const rowPath = path.concat(gv);
+        const groupCols = groupKeys.map((k,i)=> i<rowPath.length ? rowPath[i] : '');
+        rows.push([...groupCols, groupRecords.length, ...valueFieldsCfg.map(vf=>{
+          const a = agg.find(x=>x.field===vf.field && x.agg===vf.agg);
+          return a ? round2(a.value) : '';
+        })]);
+        walk(node[gv], depth+1, rowPath);
+      });
+    }
+    walk(tree, 0, []);
+    const grand = aggregateRecords(records, valueFieldsCfg);
+    rows.push([`Grand total (${records.length} rows)`, ...Array(Math.max(0,groupKeys.length-1)).fill(''), records.length, ...valueFieldsCfg.map(vf=>{
+      const a = grand.find(x=>x.field===vf.field && x.agg===vf.agg);
+      return a ? round2(a.value) : '';
+    })]);
+    aoa = [headers, ...rows];
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = aoa[0].map(()=>({wch:18}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Analysis view');
+  const fname = `landing_cost_analysis_${analysisState.level}_${groupKeys.length ? 'grouped' : 'flat'}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  showImportStatus(`Downloaded ${fname}`, false);
+}
+
+/* ---------- Saved views (session memory + optional Supabase persistence) ---------- */
+async function loadSavedViewsFromSupabase(){
+  try{
+    const { data, error } = await sb.from('saved_views').select('*').eq('org_id', TEST_ORG_ID).order('created_at');
+    if(error) throw error;
+    savedViews = (data||[]).map(row=>({ id:row.id, name:row.name, config: typeof row.config==='string' ? JSON.parse(row.config) : row.config }));
+  }catch(e){
+    // Table may not exist yet (see optional migration) — fall back to session-only views.
+    savedViews = savedViews || [];
+  }
+}
+
+async function saveCurrentView(){
+  const name = prompt('Name this view:');
+  if(!name) return;
+  const config = JSON.parse(JSON.stringify(analysisState));
+  const entry = { name, config };
+  try{
+    const { data, error } = await sb.from('saved_views').insert({ org_id:TEST_ORG_ID, name, config }).select().single();
+    if(error) throw error;
+    entry.id = data.id;
+  }catch(e){
+    // Persist in-session only if the saved_views table isn't set up.
+  }
+  savedViews.push(entry);
+  renderAnalysis();
+}
+
+function loadView(idx){
+  if(idx==='') return;
+  const v = savedViews[Number(idx)];
+  if(!v) return;
+  analysisState = JSON.parse(JSON.stringify(v.config));
+  renderAnalysis();
+}
+
+async function deleteCurrentView(){
+  const sel = document.getElementById('anViewSelect');
+  const idx = sel.value;
+  if(idx===''){ showImportStatus('Select a saved view to delete first.', true); return; }
+  const v = savedViews[Number(idx)];
+  if(!v) return;
+  if(!confirm(`Delete saved view "${v.name}"?`)) return;
+  if(v.id){
+    try{ await sb.from('saved_views').delete().eq('id', v.id); }catch(e){ /* table may not exist */ }
+  }
+  savedViews.splice(Number(idx),1);
+  renderAnalysis();
+}
+
+async function init(){
+  if(TEST_ORG_ID === 'PASTE-TEST-ORG-ID-HERE'){
+    showImportStatus('Set TEST_ORG_ID at the top of the script before this app can load/save (see comments).', true);
+    render();
+    return;
+  }
+  showImportStatus('Loading from Supabase…', false);
+  ppds = await loadAllFromSupabase();
+  await loadSavedViewsFromSupabase();
+  if(ppds.length === 0){
+    addPpd();
+  } else {
+    render();
+  }
+  showImportStatus('Loaded.', false);
+}
+init();
+</script>
+</body>
+</html>
